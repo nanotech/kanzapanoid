@@ -162,7 +162,7 @@ class Map
 
 		# Load 60x60 tiles, 5px overlap in all four directions.
 		@tileset = Image.load_tiles(window, "media/CptnRuby Tileset.png", 60, 60, true)
-		@sky = Image.new(window, "media/Space.png", true)
+		@sky = Image.new(window, "media/kanzapanoid_sky.png", true)
 		@skyx = 0.0
 
 		gem_img = Image.new(window, "media/CptnRuby Gem.png", false)
@@ -190,7 +190,7 @@ class Map
 
 	def draw(screen_x, screen_y)
 		# Sigh, stars!
-		@sky.draw(@skyx, 0, 0)
+		@sky.draw(screen_x * -1, screen_y * -1, 0)
 
 		# Very primitive drawing function:
 		# Draws all the tiles, some off-screen, some on-screen.
