@@ -38,6 +38,7 @@ include Gosu
 
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
+TILE_SIZE = 50
 
 module Tiles
 	Grass = 0
@@ -70,7 +71,7 @@ class CptnRuby
 		@map = window.map
 		# Load all animation frames
 		@standing, @walk1, @walk2, @jump =
-			*Image.load_tiles(window, "media/CptnRuby.png", 50, 50, false)
+			*Image.load_tiles(window, "media/CptnRuby.png", TILE_SIZE, TILE_SIZE, false)
 		# This always points to the frame that is currently drawn.
 		# This is set in update, and used in draw.
 		@cur_image = @standing    
@@ -95,7 +96,7 @@ class CptnRuby
 		not @map.solid?(@x + offs_x, @y + offs_y - 45)
 	end
 
-	def update(move_x)
+	def update(move_x, move_y)
 		# Select image depending on action
 		if (move_x == 0)
 			@cur_image = @standing
@@ -115,18 +116,26 @@ class CptnRuby
 			@dir = :left
 			(-move_x).times { if would_fit(-1, 0) then @x -= 1 end }
 		end
+		if move_y < 0 then
+			(-move_y).times { if would_fit(0, -1) then @y -= 1 end }
+		end
+		if move_y >= 0 then
+			8.times do
+				if would_fit(0, 1) then @y += 1 end
+			end
+		end
 
 		# Acceleration/gravity
 		# By adding 1 each frame, and (ideally) adding vy to y, the player's
 		# jumping curve will be the parabole we want it to be.
-		@vy += 1
+		#@vy += 1
 		# Vertical movement
-		if @vy > 0 then
-			@vy.times { if would_fit(0, 1) then @y += 0.2 else @vy = 0 end }
-		end
-		if @vy < 0 then
-			(-@vy).times { if would_fit(0, -1) then @y -= 1.5 else @vy = 0 end }
-		end
+		#if @vy > 0 then
+			#@vy.times { if would_fit(0, 1) then @y += 0.2 else @vy = 0 end }
+		#end
+		#if @vy < 0 then
+			#(-@vy).times { if would_fit(0, -1) then @y -= 1.5 else @vy = 0 end }
+		#end
 	end
 
 	def try_to_jump
@@ -138,7 +147,7 @@ class CptnRuby
 	def collect_gems(gems)
 		# Same as in the tutorial game.
 		gems.reject! do |c|
-			(c.x - @x).abs < 50 and (c.y - @y).abs < 50
+			(c.x - @x).abs < TILE_SIZE and (c.y - @y).abs < TILE_SIZE
 		end
 	end
 end
@@ -146,7 +155,7 @@ end
 # Map class holds and draws tiles and gems.
 class Map
 	attr_reader :width, :height, :gems
-	attr_accessor :skyx
+	attr_accessor :window
 
 	def initialize(window, filename)
 		@window = window
@@ -170,7 +179,7 @@ class Map
 					when '#'
 						Tiles::Earth
 					when 'x'
-						@gems.push(CollectibleGem.new(gem_img, x * 50 + 25, y * 50 + 25))
+						@gems.push(CollectibleGem.new(gem_img, x * TILE_SIZE + 25, y * TILE_SIZE + 25))
 						nil
 					else
 						nil
@@ -189,12 +198,12 @@ class Map
 			@width.times do |x|
 				tile = @tiles[x][y]
 				if tile
-					realx = x * 50
-					realy = y * 50
+					realx = x * TILE_SIZE
+					realy = y * TILE_SIZE
 					if realx > (screen_x - 100) and realx < (screen_x + SCREEN_WIDTH) and realy > (screen_y - 100) and realy < (screen_y + SCREEN_HEIGHT)
 						# Draw the tile with an offset (tile images have some overlap)
 						# Scrolling is implemented here just as in the game objects.
-						@tileset[tile].draw(realx - screen_x - 5, y * 50 - screen_y - 5, 0)
+						@tileset[tile].draw(realx - screen_x - 5, realy - screen_y - 5, 0)
 					end
 				end
 			end
@@ -204,7 +213,7 @@ class Map
 
 	# Solid at a given pixel position?
 	def solid?(x, y)
-		y < 0 || @tiles[x / 50][y / 50]
+		y < 0 || @tiles[x / TILE_SIZE][y / TILE_SIZE]
 	end
 end
 
@@ -220,14 +229,15 @@ class Game < Window
 		@screen_x = @screen_y = 0
 	end
 	def update
-		move_x = 0
+		move_x = move_y = 0
 		move_x -= 5 if button_down? Button::KbLeft
 		move_x += 5 if button_down? Button::KbRight
-		@cptn.update(move_x)
+		move_y -= 10 if button_down? Button::KbUp
+		@cptn.update(move_x, move_y)
 		@cptn.collect_gems(@map.gems)
 		# Scrolling follows player
-		@screen_x = [[@cptn.x - 320, 0].max, @map.width * 50 - 640].min
-		@screen_y = [[@cptn.y - 240, 0].max, @map.height * 50 - 480].min
+		@screen_x = [[@cptn.x - 320, 0].max, @map.width * TILE_SIZE - 640].min
+		@screen_y = [[@cptn.y - 240, 0].max, @map.height * TILE_SIZE - 480].min
 	end
 	def draw
 		@map.draw @screen_x, @screen_y
