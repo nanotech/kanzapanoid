@@ -36,65 +36,95 @@ end
 require 'gosu'
 include Gosu
 
+require 'chipmunk'
+
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
 TILE_SIZE = 50
+SUBSTEPS = 10
+
+# Convenience method for converting from radians to a Vec2 vector.
+class Numeric
+	def radians_to_vec2
+		CP::Vec2.new(Math::cos(self), Math::sin(self))
+	end
+end
 
 module Tiles
 	Grass = 0
 	Earth = 1
 end
 
-class CollectibleGem
-	attr_reader :x, :y
+# Layering of sprites
+module ZOrder
+	Background, Tiles, Items, Player, UI = *0..5
+end
 
-	def initialize(image, x, y)
+class CollectibleGem
+	attr_reader :shape
+
+	def initialize(image, shape, vect)
 		@image = image
-		@x, @y = x, y
+
+		@shape = shape
+		@shape.body.p = vect
+		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
+		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
 	end
 
 	def draw(screen_x, screen_y)
 		# Draw, slowly rotating
-		@image.draw_rot(@x - screen_x, @y - screen_y, 0,
+		@image.draw_rot(@shape.body.p.x - screen_x, @shape.body.p.y - screen_y, 0,
 						15 * Math.sin(milliseconds / 300.0))
 	end
 end
 
 # Player class.
-class CptnRuby
-	attr_reader :x, :y
+class Player
+	attr_reader :shape
 
-	def initialize(window, x, y)
-		@x, @y = x, y
+	def initialize(window, shape)
+		@shape = shape
+		@shape.body.p = CP::Vec2.new(0.0, 0.0) # position
+		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
+
 		@dir = :left
 		@vy = 0 # Vertical velocity
 		@map = window.map
+
 		# Load all animation frames
 		@standing, @walk1, @walk2, @jump =
 			*Image.load_tiles(window, "media/CptnRuby.png", TILE_SIZE, TILE_SIZE, false)
 		# This always points to the frame that is currently drawn.
 		# This is set in update, and used in draw.
 		@cur_image = @standing    
+
+		# Keep in mind that down the screen is positive y, which means that PI/2 radians,
+		# which you might consider the top in the traditional Trig unit circle sense is actually
+		# the bottom; thus 3PI/2 is the top
+		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
 	end
 
 	def draw(screen_x, screen_y)
 		# Flip vertically when facing to the left.
-		if @dir == :left then
-			offs_x = -25
-			factor = 1.0
-		else
-			offs_x = 25
-			factor = -1.0
-		end
-		@cur_image.draw(@x - screen_x + offs_x, @y - screen_y - 49, 0, factor, 1.0)
+		#if @dir == :left then
+			#offs_x = -25
+			#factor = 1.0
+		#else
+			#offs_x = 25
+			#factor = -1.0
+		#end
+		#@cur_image.draw(@x - screen_x + offs_x, @y - screen_y - 49, 0, factor, 1.0)
+
+		@cur_image.draw_rot(@shape.body.p.x, @shape.body.p.y, ZOrder::Player, @shape.body.a * 180.0 / Math::PI + 90)
 	end
 
 	# Could the object be placed at x + offs_x/y + offs_y without being stuck?
-	def would_fit(offs_x, offs_y)
+	#def would_fit(offs_x, offs_y)
 		# Check at the center/top and center/bottom for map collisions
-		not @map.solid?(@x + offs_x, @y + offs_y) and
-		not @map.solid?(@x + offs_x, @y + offs_y - 45)
-	end
+	#	not @map.solid?(@x + offs_x, @y + offs_y) and
+	#	not @map.solid?(@x + offs_x, @y + offs_y - 45)
+	#end
 
 	def update(move_x, move_y)
 		# Select image depending on action
@@ -106,48 +136,42 @@ class CptnRuby
 		if (@vy < 0)
 			@cur_image = @jump
 		end
+	end
 
-		# Directional walking, horizontal movement
-		if move_x > 0 then
-			@dir = :right
-			move_x.times { if would_fit(1, 0) then @x += 1 end }
-		end
-		if move_x < 0 then
-			@dir = :left
-			(-move_x).times { if would_fit(-1, 0) then @x -= 1 end }
-		end
-		if move_y < 0 then
-			(-move_y).times { if would_fit(0, -1) then @y -= 1 end }
-		end
-		if move_y >= 0 then
-			8.times do
-				if would_fit(0, 1) then @y += 1 end
-			end
-		end
+	# Directly set the position of our Player
+	def warp(vect)
+		@shape.body.p = vect
+	end
 
-		# Acceleration/gravity
-		# By adding 1 each frame, and (ideally) adding vy to y, the player's
-		# jumping curve will be the parabole we want it to be.
-		#@vy += 1
-		# Vertical movement
-		#if @vy > 0 then
-			#@vy.times { if would_fit(0, 1) then @y += 0.2 else @vy = 0 end }
-		#end
-		#if @vy < 0 then
-			#(-@vy).times { if would_fit(0, -1) then @y -= 1.5 else @vy = 0 end }
-		#end
+	# Apply negative Torque; Chipmunk will do the rest
+	# SUBSTEPS is used as a divisor to keep turning rate constant
+	# even if the number of steps per update are adjusted
+	def move_left
+		#@shape.body.t -= 300.0/SUBSTEPS
+		@shape.body.apply_force((CP::Vec2.new(-5, 0) * (300.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+	end
+
+	# Apply positive Torque; Chipmunk will do the rest
+	# SUBSTEPS is used as a divisor to keep turning rate constant
+	# even if the number of steps per update are adjusted
+	def move_right
+		#@shape.body.t += 300.0/SUBSTEPS
+		@shape.body.apply_force((CP::Vec2.new(5, 0) * (300.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+	end
+
+	# Apply forward force; Chipmunk will do the rest
+	# SUBSTEPS is used as a divisor to keep acceleration rate constant
+	# even if the number of steps per update are adjusted
+	# Here we must convert the angle (facing) of the body into
+	# forward momentum by creating a vector in the direction of the facing
+	# and with a magnitude representing the force we want to apply
+	def jump
+		@shape.body.apply_force((@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
 	end
 
 	def try_to_jump
 		if @map.solid?(@x, @y + 1) then
 			@vy = -20
-		end
-	end
-
-	def collect_gems(gems)
-		# Same as in the tutorial game.
-		gems.reject! do |c|
-			(c.x - @x).abs < TILE_SIZE and (c.y - @y).abs < TILE_SIZE
 		end
 	end
 end
@@ -159,6 +183,7 @@ class Map
 
 	def initialize(window, filename)
 		@window = window
+		@space = window.space
 
 		# Load 60x60 tiles, 5px overlap in all four directions.
 		@tileset = Image.load_tiles(window, "media/CptnRuby Tileset.png", 60, 60, true)
@@ -171,6 +196,7 @@ class Map
 		lines = File.readlines(filename).map { |line| line.chop }
 		@height = lines.size
 		@width = lines[0].size
+
 		@tiles = Array.new(@width) do |x|
 			Array.new(@height) do |y|
 				case lines[y][x, 1]
@@ -179,7 +205,16 @@ class Map
 					when '#'
 						Tiles::Earth
 					when 'x'
-						@gems.push(CollectibleGem.new(gem_img, x * TILE_SIZE + 25, y * TILE_SIZE + 25))
+						body = CP::Body.new(0.0001, 0.0001)
+						shape = CP::Shape::Circle.new(body, 10, CP::Vec2.new(0.0, 0.0))
+						shape.collision_type = :gem
+
+						@space.add_body(body)
+						@space.add_shape(shape)
+
+						vect = CP::Vec2.new(x * TILE_SIZE + 25, y * TILE_SIZE + 25)
+
+						@gems.push(CollectibleGem.new(gem_img, shape, vect))
 						nil
 					else
 						nil
@@ -190,7 +225,7 @@ class Map
 
 	def draw(screen_x, screen_y)
 		# Sigh, stars!
-		@sky.draw(screen_x * -1, screen_y * -1, 0)
+		@sky.draw(screen_x * -1, screen_y * -1, ZOrder::Background)
 
 		# Very primitive drawing function:
 		# Draws all the tiles, some off-screen, some on-screen.
@@ -218,33 +253,97 @@ class Map
 end
 
 class Game < Window
-	attr_reader :map
+	attr_reader :map, :space
 
 	def initialize
 		super(SCREEN_WIDTH, SCREEN_HEIGHT, false)
 		self.caption = "Cptn. Ruby"
-		@map = Map.new(self, "media/CptnRuby Map.txt")
-		@cptn = CptnRuby.new(self, 400, 100)
+
+		# Put the beep here, as it is the environment now that determines collision
+		@beep = Gosu::Sample.new(self, "media/Beep.wav")
+
+		# Put the score here, as it is the environment that tracks this now
+		@score = 0
+		@font = Gosu::Font.new(self, Gosu::default_font_name, 20)
+
+		# Time increment over which to apply a physics "step" ("delta t")
+		@dt = (1.0/60.0)
+
+		# Create our Space and set its damping and gravity
+		@space = CP::Space.new
+		@space.damping = 0.8
+		@space.gravity = CP::Vec2.new(0.0, 5.0)
+
+		# Create the Body for the Player
+		body = CP::Body.new(10.0, 150.0)
+
+		# In order to create a shape, we must first define it
+		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
+		# We'll use s simple, 4 sided Poly for our Player (ship)
+		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
+		shape_array = [CP::Vec2.new(-25.0, -25.0), CP::Vec2.new(-25.0, 25.0), CP::Vec2.new(25.0, 1.0), CP::Vec2.new(25.0, -1.0)]
+		shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
+
+		# The collision_type of a shape allows us to set up special collision behavior
+		# based on these types.  The actual value for the collision_type is arbitrary
+		# and, as long as it is consistent, will work for us; of course, it helps to have it make sense
+		shape.collision_type = :ship
+
+		@space.add_body(body)
+		@space.add_shape(shape)
+
+		@player = Player.new(self, shape)
+		@player.warp(CP::Vec2.new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)) # move to the center of the window
+
 		# Scrolling is stored as the position of the top left corner of the screen.
 		@screen_x = @screen_y = 0
+		@camera_x,  @camera_y = SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2
+
+		@map = Map.new(self, "media/CptnRuby Map.txt")
 	end
+
 	def update
-		move_x = move_y = 0
-		move_x -= 5 if button_down? Button::KbLeft
-		move_x += 5 if button_down? Button::KbRight
-		move_y -= 10 if button_down? Button::KbUp
-		@cptn.update(move_x, move_y)
-		@cptn.collect_gems(@map.gems)
-		# Scrolling follows player
-		@screen_x = [[@cptn.x - 320, 0].max, @map.width * TILE_SIZE - 640].min
-		@screen_y = [[@cptn.y - 240, 0].max, @map.height * TILE_SIZE - 480].min
+		# Step the physics environment SUBSTEPS times each update
+		SUBSTEPS.times do
+
+			# Scrolling follows player
+			@screen_x = [[@player.shape.body.p.x - (SCREEN_WIDTH / 2), 0].max, @map.width * TILE_SIZE - SCREEN_WIDTH].min
+			@screen_y = [[@player.shape.body.p.y - (SCREEN_HEIGHT / 2), 0].max, @map.height * TILE_SIZE - SCREEN_HEIGHT].min
+
+			#@camera_x = @player.shape.body.p.x
+			#@camera_y = @player.shape.body.p.y
+
+			# When a force or torque is set on a Body, it is cumulative
+			# This means that the force you applied last SUBSTEP will compound with the
+			# force applied this SUBSTEP; which is probably not the behavior you want
+			# We reset the forces on the Player each SUBSTEP for this reason
+			@player.shape.body.reset_forces
+
+			# Check keyboard
+			if button_down? Gosu::Button::KbLeft
+				@player.move_left
+			end
+			if button_down? Gosu::Button::KbRight
+				@player.move_right
+			end
+
+			if button_down? Gosu::Button::KbUp
+				@player.jump
+			end
+
+			# Perform the step over @dt period of time
+			# For best performance @dt should remain consistent for the game
+			@space.step(@dt)
+		end
 	end
+
 	def draw
 		@map.draw @screen_x, @screen_y
-		@cptn.draw @screen_x, @screen_y
+		@player.draw @screen_x, @screen_y
 	end
+
 	def button_down(id)
-		#if id == Button::KbUp then @cptn.try_to_jump end
+		#if id == Button::KbUp then @player.try_to_jump end
 		if id == Button::KbEscape then close end
 	end
 end
