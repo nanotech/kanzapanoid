@@ -76,6 +76,7 @@ class CollectibleGem
 		# Draw, slowly rotating
 		@image.draw_rot(@shape.body.p.x - screen_x, @shape.body.p.y - screen_y, 0,
 						15 * Math.sin(milliseconds / 300.0))
+		#@image.draw((@shape.body.p.x - @image.width / 2.0), (@shape.body.p.y - @image.height / 2.0), ZOrder::Items, 1, 1)
 	end
 end
 
@@ -83,9 +84,10 @@ end
 class Player
 	attr_reader :shape
 
-	def initialize(window, shape)
+	def initialize(window, shape, position)
 		@shape = shape
-		@shape.body.p = CP::Vec2.new(0.0, 0.0) # position
+		#@shape.body.p = CP::Vec2.new(0.0, 0.0) # position
+		@shape.body.p = position
 		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
 
 		@dir = :left
@@ -97,7 +99,7 @@ class Player
 			*Image.load_tiles(window, "media/CptnRuby.png", TILE_SIZE, TILE_SIZE, false)
 		# This always points to the frame that is currently drawn.
 		# This is set in update, and used in draw.
-		@cur_image = @standing    
+		@cur_image = @standing
 
 		# Keep in mind that down the screen is positive y, which means that PI/2 radians,
 		# which you might consider the top in the traditional Trig unit circle sense is actually
@@ -116,7 +118,8 @@ class Player
 		#end
 		#@cur_image.draw(@x - screen_x + offs_x, @y - screen_y - 49, 0, factor, 1.0)
 
-		@cur_image.draw_rot(@shape.body.p.x, @shape.body.p.y, ZOrder::Player, @shape.body.a * 180.0 / Math::PI + 90)
+		#@cur_image.draw_rot(@shape.body.p.x, @shape.body.p.y, ZOrder::Player, @shape.body.a * 180.0 / Math::PI + 90)
+		@cur_image.draw_rot(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, ZOrder::Player, @shape.body.a * 180.0 / Math::PI + 90)
 	end
 
 	# Could the object be placed at x + offs_x/y + offs_y without being stuck?
@@ -169,6 +172,10 @@ class Player
 		@shape.body.apply_force((@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
 	end
 
+	def duck
+		@shape.body.apply_force(-(@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+	end
+
 	def try_to_jump
 		if @map.solid?(@x, @y + 1) then
 			@vy = -20
@@ -206,15 +213,15 @@ class Map
 						Tiles::Earth
 					when 'x'
 						body = CP::Body.new(0.0001, 0.0001)
-						shape = CP::Shape::Circle.new(body, 10, CP::Vec2.new(0.0, 0.0))
+						shape = CP::Shape::Circle.new(body, 25, CP::Vec2.new(0.0, 0.0))
 						shape.collision_type = :gem
 
 						@space.add_body(body)
 						@space.add_shape(shape)
 
-						vect = CP::Vec2.new(x * TILE_SIZE + 25, y * TILE_SIZE + 25)
+						location = CP::Vec2.new((x * TILE_SIZE) + (TILE_SIZE / 2), (y * TILE_SIZE) + (TILE_SIZE / 2))
 
-						@gems.push(CollectibleGem.new(gem_img, shape, vect))
+						@gems.push(CollectibleGem.new(gem_img, shape, location))
 						nil
 					else
 						nil
@@ -235,15 +242,25 @@ class Map
 				if tile
 					realx = x * TILE_SIZE
 					realy = y * TILE_SIZE
-					if realx > (screen_x - 100) and realx < (screen_x + SCREEN_WIDTH) and realy > (screen_y - 100) and realy < (screen_y + SCREEN_HEIGHT)
+					#if realx > (screen_x - 100) and realx < (screen_x + SCREEN_WIDTH) and realy > (screen_y - 100) and realy < (screen_y + SCREEN_HEIGHT)
 						# Draw the tile with an offset (tile images have some overlap)
 						# Scrolling is implemented here just as in the game objects.
 						@tileset[tile].draw(realx - screen_x - 5, realy - screen_y - 5, 0)
-					end
+					#end
 				end
 			end
 		end
 		@gems.each { |c| c.draw(screen_x, screen_y) }
+	end
+
+	def createSolidTile(vect)
+		body = CP::Body.new(0.0001, 0.0001)
+		shape_array = [CP::Vec2.new(-25.0, -25.0), CP::Vec2.new(-25.0, 25.0), CP::Vec2.new(25.0, 1.0), CP::Vec2.new(25.0, -1.0)]
+		shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
+		shape.collision_type = :tile
+
+		@space.add_body(body)
+		@space.add_shape(shape)
 	end
 
 	# Solid at a given pixel position?
@@ -272,7 +289,7 @@ class Game < Window
 		# Create our Space and set its damping and gravity
 		@space = CP::Space.new
 		@space.damping = 0.8
-		@space.gravity = CP::Vec2.new(0.0, 5.0)
+		#@space.gravity = CP::Vec2.new(0.0, 5.0)
 
 		# Create the Body for the Player
 		body = CP::Body.new(10.0, 150.0)
@@ -281,23 +298,24 @@ class Game < Window
 		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
 		# We'll use s simple, 4 sided Poly for our Player (ship)
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_array = [CP::Vec2.new(-25.0, -25.0), CP::Vec2.new(-25.0, 25.0), CP::Vec2.new(25.0, 1.0), CP::Vec2.new(25.0, -1.0)]
+		shape_size = 25.0
+		shape_array = [CP::Vec2.new(-shape_size, -shape_size), CP::Vec2.new(-shape_size, shape_size), CP::Vec2.new(shape_size, 1.0), CP::Vec2.new(shape_size, -1.0)]
 		shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
 
 		# The collision_type of a shape allows us to set up special collision behavior
 		# based on these types.  The actual value for the collision_type is arbitrary
 		# and, as long as it is consistent, will work for us; of course, it helps to have it make sense
-		shape.collision_type = :ship
+		shape.collision_type = :player
 
 		@space.add_body(body)
 		@space.add_shape(shape)
 
-		@player = Player.new(self, shape)
-		@player.warp(CP::Vec2.new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)) # move to the center of the window
+		@player = Player.new(self, shape, CP::Vec2.new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
+		#@player.warp(CP::Vec2.new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)) # move to the center of the window
 
 		# Scrolling is stored as the position of the top left corner of the screen.
 		@screen_x = @screen_y = 0
-		@camera_x,  @camera_y = SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2
+		@camera_x,  @camera_y = 0
 
 		@map = Map.new(self, "media/CptnRuby Map.txt")
 	end
@@ -307,11 +325,13 @@ class Game < Window
 		SUBSTEPS.times do
 
 			# Scrolling follows player
-			@screen_x = [[@player.shape.body.p.x - (SCREEN_WIDTH / 2), 0].max, @map.width * TILE_SIZE - SCREEN_WIDTH].min
-			@screen_y = [[@player.shape.body.p.y - (SCREEN_HEIGHT / 2), 0].max, @map.height * TILE_SIZE - SCREEN_HEIGHT].min
+			#@screen_x = [[@player.shape.body.p.x - (SCREEN_WIDTH / 2), 0].max, @map.width * TILE_SIZE - SCREEN_WIDTH].min
+			#@screen_y = [[@player.shape.body.p.y - (SCREEN_HEIGHT / 2), 0].max, @map.height * TILE_SIZE - SCREEN_HEIGHT].min
 
-			#@camera_x = @player.shape.body.p.x
-			#@camera_y = @player.shape.body.p.y
+			@camera_x = @player.shape.body.p.x - (SCREEN_WIDTH / 2)
+			@camera_y = @player.shape.body.p.y - (SCREEN_HEIGHT / 2)
+
+			#if @camera_x < 0 then @camera_x = 0 end
 
 			# When a force or torque is set on a Body, it is cumulative
 			# This means that the force you applied last SUBSTEP will compound with the
@@ -331,6 +351,10 @@ class Game < Window
 				@player.jump
 			end
 
+			if button_down? Gosu::Button::KbDown
+				@player.duck
+			end
+
 			# Perform the step over @dt period of time
 			# For best performance @dt should remain consistent for the game
 			@space.step(@dt)
@@ -338,13 +362,17 @@ class Game < Window
 	end
 
 	def draw
-		@map.draw @screen_x, @screen_y
-		@player.draw @screen_x, @screen_y
+		@map.draw @camera_x, @camera_y
+		@player.draw @camera_x, @camera_y
 	end
 
 	def button_down(id)
 		#if id == Button::KbUp then @player.try_to_jump end
 		if id == Button::KbEscape then close end
+		if id == Button::KbSpace then
+			@player.warp(CP::Vec2.new(SCREEN_WIDTH, SCREEN_HEIGHT))
+			self.caption = @player.shape.body.p.x.to_s + '|' + @player.shape.body.p.y.to_s
+		end
 	end
 end
 
