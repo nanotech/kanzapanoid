@@ -76,7 +76,6 @@ class CollectibleGem
 		# Draw, slowly rotating
 		@image.draw_rot(@shape.body.p.x - screen_x, @shape.body.p.y - screen_y, 0,
 						15 * Math.sin(milliseconds / 300.0))
-		#@image.draw((@shape.body.p.x - @image.width / 2.0), (@shape.body.p.y - @image.height / 2.0), ZOrder::Items, 1, 1)
 	end
 end
 
@@ -86,7 +85,6 @@ class Player
 
 	def initialize(window, shape, position)
 		@shape = shape
-		#@shape.body.p = CP::Vec2.new(0.0, 0.0) # position
 		@shape.body.p = position
 		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
 
@@ -151,7 +149,7 @@ class Player
 	# even if the number of steps per update are adjusted
 	def move_left
 		#@shape.body.t -= 300.0/SUBSTEPS
-		@shape.body.apply_force((CP::Vec2.new(-5, 0) * (300.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_force(CP::Vec2.new(-5, 0) * (300.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
 	end
 
 	# Apply positive Torque; Chipmunk will do the rest
@@ -159,7 +157,7 @@ class Player
 	# even if the number of steps per update are adjusted
 	def move_right
 		#@shape.body.t += 300.0/SUBSTEPS
-		@shape.body.apply_force((CP::Vec2.new(5, 0) * (300.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_force(CP::Vec2.new(5, 0) * (300.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
 	end
 
 	# Apply forward force; Chipmunk will do the rest
@@ -169,17 +167,13 @@ class Player
 	# forward momentum by creating a vector in the direction of the facing
 	# and with a magnitude representing the force we want to apply
 	def jump
-		@shape.body.apply_force((@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+		#@shape.body.apply_force((@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_force(CP::Vec2.new(0, -5) * (300.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
 	end
 
 	def duck
-		@shape.body.apply_force(-(@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
-	end
-
-	def try_to_jump
-		if @map.solid?(@x, @y + 1) then
-			@vy = -20
-		end
+		#@shape.body.apply_force(-(@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_force(CP::Vec2.new(0, 5) * (300.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
 	end
 end
 
@@ -208,18 +202,20 @@ class Map
 			Array.new(@height) do |y|
 				case lines[y][x, 1]
 					when '"'
+						self.createSolidTile self.tileVector(x, y)
 						Tiles::Grass
 					when '#'
+						self.createSolidTile self.tileVector(x, y)
 						Tiles::Earth
 					when 'x'
-						body = CP::Body.new(0.0001, 0.0001)
+						body = CP::Body.new(0.001, 0.001)
 						shape = CP::Shape::Circle.new(body, 25, CP::Vec2.new(0.0, 0.0))
 						shape.collision_type = :gem
 
 						@space.add_body(body)
 						@space.add_shape(shape)
 
-						location = CP::Vec2.new((x * TILE_SIZE) + (TILE_SIZE / 2), (y * TILE_SIZE) + (TILE_SIZE / 2))
+						location = self.tileVector(x, y)
 
 						@gems.push(CollectibleGem.new(gem_img, shape, location))
 						nil
@@ -232,7 +228,7 @@ class Map
 
 	def draw(screen_x, screen_y)
 		# Sigh, stars!
-		@sky.draw(screen_x * -1, screen_y * -1, ZOrder::Background)
+		@sky.draw(-screen_x, -screen_y, ZOrder::Background)
 
 		# Very primitive drawing function:
 		# Draws all the tiles, some off-screen, some on-screen.
@@ -253,14 +249,24 @@ class Map
 		@gems.each { |c| c.draw(screen_x, screen_y) }
 	end
 
-	def createSolidTile(vect)
-		body = CP::Body.new(0.0001, 0.0001)
-		shape_array = [CP::Vec2.new(-25.0, -25.0), CP::Vec2.new(-25.0, 25.0), CP::Vec2.new(25.0, 1.0), CP::Vec2.new(25.0, -1.0)]
-		shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
+	def tileVector(x, y)
+		CP::Vec2.new((x * TILE_SIZE) + (TILE_SIZE / 2), (y * TILE_SIZE) + (TILE_SIZE / 2))
+	end
+
+	def createSolidTile(position)
+		body = CP::Body.new(100.0**100.0, 100.0**100.0)
+		shape_size = TILE_SIZE * 0.6
+		shape_array = [
+			CP::Vec2.new(-shape_size, -shape_size),
+			CP::Vec2.new(-shape_size, shape_size),
+			CP::Vec2.new(shape_size, shape_size),
+			CP::Vec2.new(shape_size, -shape_size)
+		]
+		shape = CP::Shape::Poly.new(body, shape_array, position)
 		shape.collision_type = :tile
 
 		@space.add_body(body)
-		@space.add_shape(shape)
+		@space.add_static_shape(shape)
 	end
 
 	# Solid at a given pixel position?
@@ -289,7 +295,7 @@ class Game < Window
 		# Create our Space and set its damping and gravity
 		@space = CP::Space.new
 		@space.damping = 0.8
-		#@space.gravity = CP::Vec2.new(0.0, 5.0)
+		@space.gravity = CP::Vec2.new(0.0, 5.0)
 
 		# Create the Body for the Player
 		body = CP::Body.new(10.0, 150.0)
@@ -298,8 +304,13 @@ class Game < Window
 		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
 		# We'll use s simple, 4 sided Poly for our Player (ship)
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_size = 25.0
-		shape_array = [CP::Vec2.new(-shape_size, -shape_size), CP::Vec2.new(-shape_size, shape_size), CP::Vec2.new(shape_size, 1.0), CP::Vec2.new(shape_size, -1.0)]
+		shape_size = 20.0
+		shape_array = [
+			CP::Vec2.new(-shape_size, -shape_size),
+			CP::Vec2.new(-shape_size, shape_size),
+			CP::Vec2.new(shape_size, shape_size),
+			CP::Vec2.new(shape_size, -shape_size)
+		]
 		shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
 
 		# The collision_type of a shape allows us to set up special collision behavior
@@ -315,7 +326,7 @@ class Game < Window
 
 		# Scrolling is stored as the position of the top left corner of the screen.
 		@screen_x = @screen_y = 0
-		@camera_x,  @camera_y = 0
+		@camera_x = @camera_y = 0
 
 		@map = Map.new(self, "media/CptnRuby Map.txt")
 	end
@@ -369,10 +380,7 @@ class Game < Window
 	def button_down(id)
 		#if id == Button::KbUp then @player.try_to_jump end
 		if id == Button::KbEscape then close end
-		if id == Button::KbSpace then
-			@player.warp(CP::Vec2.new(SCREEN_WIDTH, SCREEN_HEIGHT))
-			self.caption = @player.shape.body.p.x.to_s + '|' + @player.shape.body.p.y.to_s
-		end
+		if id == Button::KbSpace then puts @player.shape.body.v end
 	end
 end
 
