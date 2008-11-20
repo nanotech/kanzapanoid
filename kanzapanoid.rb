@@ -16,9 +16,10 @@ SCREEN_HEIGHT = 480
 TILE_SIZE = 50
 SUBSTEPS = 10
 
+require 'world'
+require 'vectormap'
 require 'player'
 require 'items'
-require 'tilemap'
 require 'helpers'
 
 # Layering of sprites
@@ -32,6 +33,8 @@ class Game < Window
 	def initialize
 		super(SCREEN_WIDTH, SCREEN_HEIGHT, false)
 		self.caption = "Cptn. Ruby"
+
+		@world = World.new(self)
 
 		# Put the beep here, as it is the environment now that determines collision
 		@beep = Gosu::Sample.new(self, "media/Beep.wav")
@@ -73,13 +76,13 @@ class Game < Window
 		@space.add_shape(shape)
 
 		@player = Player.new(self, shape, CP::Vec2.new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
-		#@player.warp(CP::Vec2.new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)) # move to the center of the window
+		@player.warp CP::Vec2.new(200.0, 200.0) # move to the center of the window
 
 		# Scrolling is stored as the position of the top left corner of the screen.
 		@screen_x = @screen_y = 0
 		@camera_x = @camera_y = 0
 
-		@map = Map.new(self, "media/CptnRuby Map.txt")
+		@map = VectorMap.new(self, 'maps/test/vectors.txt')
 	end
 
 	def update
@@ -102,20 +105,14 @@ class Game < Window
 			@player.shape.body.reset_forces
 
 			# Check keyboard
-			if button_down? Gosu::Button::KbLeft
-				@player.move_left
-			end
-			if button_down? Gosu::Button::KbRight
-				@player.move_right
-			end
+			if button_down? Gosu::KbLeft then @player.move_left end
+			if button_down? Gosu::KbRight then @player.move_right end
 
-			if button_down? Gosu::Button::KbUp
-				@player.jump
-			end
+			if button_down? self.char_to_button_id('a') then @player.spin_left end
+			if button_down? self.char_to_button_id('d') then @player.spin_right end
 
-			if button_down? Gosu::Button::KbDown
-				@player.duck
-			end
+			if button_down? Gosu::KbUp then @player.jump end
+			if button_down? Gosu::KbDown then @player.duck end
 
 			# Perform the step over @dt period of time
 			# For best performance @dt should remain consistent for the game
@@ -124,14 +121,12 @@ class Game < Window
 	end
 
 	def draw
-		@map.draw @camera_x, @camera_y
+		@world.draw @camera_x, @camera_y
 		@player.draw @camera_x, @camera_y
 	end
 
 	def button_down(id)
-		#if id == Button::KbUp then @player.try_to_jump end
 		if id == Button::KbEscape then close end
-		if id == Button::KbSpace then puts @player.shape.body.v end
 	end
 end
 

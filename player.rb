@@ -65,6 +65,14 @@ class Player
 		@shape.body.apply_force(CP::Vec2.new(5, 0) * (300.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
 	end
 
+	def spin_left
+		@shape.body.t -= 300.0/SUBSTEPS
+	end
+
+	def spin_right
+		@shape.body.t += 300.0/SUBSTEPS
+	end
+
 	def jump
 		#@shape.body.apply_force((@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
 		@shape.body.apply_force(CP::Vec2.new(0, -5) * (300.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
