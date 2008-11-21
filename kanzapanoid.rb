@@ -28,7 +28,7 @@ module ZOrder
 end
 
 class Game < Window
-	attr_reader :map, :space
+	attr_reader :map, :space, :camera_x, :camera_y
 
 	def initialize
 		super(SCREEN_WIDTH, SCREEN_HEIGHT, false)
@@ -58,7 +58,7 @@ class Game < Window
 		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
 		# We'll use s simple, 4 sided Poly for our Player (ship)
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_size = 20.0
+		shape_size = 25.0
 		shape_array = [
 			CP::Vec2.new(-shape_size, -shape_size),
 			CP::Vec2.new(-shape_size, shape_size),
@@ -82,7 +82,8 @@ class Game < Window
 		@screen_x = @screen_y = 0
 		@camera_x = @camera_y = 0
 
-		@map = VectorMap.new(self, 'maps/test/vectors.txt')
+		@map = VectorMap.new self
+		@map.open 'test'
 	end
 
 	def update
@@ -121,7 +122,7 @@ class Game < Window
 	end
 
 	def draw
-		@world.draw @camera_x, @camera_y
+		@map.draw
 		@player.draw @camera_x, @camera_y
 	end
 
