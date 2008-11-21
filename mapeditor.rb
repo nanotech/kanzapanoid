@@ -155,8 +155,8 @@ class PolyEditor
 
 	def cancelLine
 		@map.line.clear
-		if @poly.size > 0
-			@line.push @poly.pop[0]
+		if @map.poly.size > 0
+			@map.line.push @map.poly.pop[0]
 		end
 	end
 
