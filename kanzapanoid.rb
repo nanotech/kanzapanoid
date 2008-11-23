@@ -19,6 +19,8 @@ end
 
 SUBSTEPS = 1
 
+$LOAD_PATH.push 'lib/'
+
 require 'vectormap'
 require 'player'
 require 'items'

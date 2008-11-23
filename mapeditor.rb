@@ -14,6 +14,7 @@ module Screen
 	Height = 480
 end
 
+$LOAD_PATH.push 'lib/'
 require 'vectormap'
 
 # Layering of sprites
