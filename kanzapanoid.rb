@@ -11,12 +11,14 @@ include Gosu
 
 require 'chipmunk'
 
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 480
-TILE_SIZE = 50
-SUBSTEPS = 10
+module Screen
+	Width = 640
+	Height = 480
+	Center = CP::Vec2.new(self::Width / 2, self::Height / 2)
+end
 
-require 'world'
+SUBSTEPS = 1
+
 require 'vectormap'
 require 'player'
 require 'items'
@@ -31,10 +33,8 @@ class Game < Window
 	attr_reader :map, :space, :camera_x, :camera_y
 
 	def initialize
-		super(SCREEN_WIDTH, SCREEN_HEIGHT, false)
+		super(Screen::Width, Screen::Height, false)
 		self.caption = "Cptn. Ruby"
-
-		@world = World.new(self)
 
 		# Put the beep here, as it is the environment now that determines collision
 		@beep = Gosu::Sample.new(self, "media/Beep.wav")
@@ -49,34 +49,9 @@ class Game < Window
 		# Create our Space and set its damping and gravity
 		@space = CP::Space.new
 		@space.damping = 0.8
-		@space.gravity = CP::Vec2.new(0.0, 5.0)
+		@space.gravity = CP::Vec2.new(0.0, 500.0)
 
-		# Create the Body for the Player
-		body = CP::Body.new(10.0, 150.0)
-
-		# In order to create a shape, we must first define it
-		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
-		# We'll use s simple, 4 sided Poly for our Player (ship)
-		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_size = 25.0
-		shape_array = [
-			CP::Vec2.new(-shape_size, -shape_size),
-			CP::Vec2.new(-shape_size, shape_size),
-			CP::Vec2.new(shape_size, shape_size),
-			CP::Vec2.new(shape_size, -shape_size)
-		]
-		shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
-
-		# The collision_type of a shape allows us to set up special collision behavior
-		# based on these types.  The actual value for the collision_type is arbitrary
-		# and, as long as it is consistent, will work for us; of course, it helps to have it make sense
-		shape.collision_type = :player
-
-		@space.add_body(body)
-		@space.add_shape(shape)
-
-		@player = Player.new(self, shape, CP::Vec2.new(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
-		@player.warp CP::Vec2.new(200.0, 200.0) # move to the center of the window
+		@player = Player.new self, CP::Vec2.new(300.0, 200.0)
 
 		# Scrolling is stored as the position of the top left corner of the screen.
 		@screen_x = @screen_y = 0
@@ -91,11 +66,8 @@ class Game < Window
 		SUBSTEPS.times do
 
 			# Scrolling follows player
-			#@screen_x = [[@player.shape.body.p.x - (SCREEN_WIDTH / 2), 0].max, @map.width * TILE_SIZE - SCREEN_WIDTH].min
-			#@screen_y = [[@player.shape.body.p.y - (SCREEN_HEIGHT / 2), 0].max, @map.height * TILE_SIZE - SCREEN_HEIGHT].min
-
-			@camera_x = @player.shape.body.p.x - (SCREEN_WIDTH / 2)
-			@camera_y = @player.shape.body.p.y - (SCREEN_HEIGHT / 2)
+			@camera_x = @player.shape.body.p.x - (Screen::Width / 2)
+			@camera_y = @player.shape.body.p.y - (Screen::Height / 2)
 
 			#if @camera_x < 0 then @camera_x = 0 end
 
@@ -106,8 +78,11 @@ class Game < Window
 			@player.shape.body.reset_forces
 
 			# Check keyboard
-			if button_down? Gosu::KbLeft then @player.move_left end
-			if button_down? Gosu::KbRight then @player.move_right end
+			if button_down? Gosu::KbLeft then @player.walk_left end
+			if button_down? Gosu::KbRight then @player.walk_right end
+			if !button_down? Gosu::KbLeft and !button_down? Gosu::KbRight
+				@player.stop
+			end
 
 			if button_down? self.char_to_button_id('a') then @player.spin_left end
 			if button_down? self.char_to_button_id('d') then @player.spin_right end
@@ -119,6 +94,8 @@ class Game < Window
 			# For best performance @dt should remain consistent for the game
 			@space.step(@dt)
 		end
+
+		@player.update
 	end
 
 	def draw
