@@ -28,7 +28,7 @@ require 'helpers'
 
 # Layering of sprites
 module ZOrder
-	Background, Tiles, Items, Player, UI = *0..5
+	Background, Items, Player, UI = 0, 100, 200, 900
 end
 
 class Game < Window
@@ -59,8 +59,8 @@ class Game < Window
 		@screen_x = @screen_y = 0
 		@camera_x = @camera_y = 0
 
-		@map = VectorMap.new self
-		@map.open 'test'
+		#@map = VectorMap.new self
+		#@map.open 'test'
 	end
 
 	def update
@@ -101,7 +101,7 @@ class Game < Window
 	end
 
 	def draw
-		@map.draw
+		#@map.draw
 		@player.draw @camera_x, @camera_y
 	end
 

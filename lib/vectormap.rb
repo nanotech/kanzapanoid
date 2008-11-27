@@ -60,7 +60,7 @@ class VectorMap
 			vertices = []
 
 			mode = ParseMode::None
-			body = CP::Body.new(8**10, 8**10) if @editorMode == false
+			body = CP::Body.new(1.0/0.0, 1.0/0.0) if @editorMode == false
 
 			lines.each do |line|
 				oldmode = mode
