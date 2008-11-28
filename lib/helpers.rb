@@ -7,8 +7,11 @@ class Numeric
 	# Same as above, but converts to a plain Ruby array.
 	def radians_to_cartesian; [Math::cos(self), Math::sin(self)]; end
 
-	def radians_to_gosu; self * (180.0 / Math::PI) + 90; end;
-	def gosu_to_radians; (self - 90) / (180.0 / Math::PI); end;
+	def radians_to_gosu; self.radians_to_degrees + 90; end;
+	def gosu_to_radians; (self - 90).radians_to_degrees; end;
+
+	def radians_to_degrees; self * (180.0 / Math::PI); end;
+	def degrees_to_radians; self / (180.0 / Math::PI); end;
 
 	def distance_to(other); Math::sqrt(self**2 + other**2); end
 end

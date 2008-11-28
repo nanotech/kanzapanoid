@@ -48,68 +48,28 @@ class Character
 	end
 
 	def draw(screen_x, screen_y)
-=begin
-		# Flip vertically when facing to the left.
-		if @shape.body.v.x > 0
-			offs_x = -25
-			factor = 1.0
-		else
-			offs_x = 25
-			factor = -1.0
-		end
-		#@cur_image.draw(@x - screen_x + offs_x, @y - screen_y - 49, 0, factor, 1.0)
-
-		#@cur_image.draw_rot(@shape.body.p.x, @shape.body.p.y, ZOrder::Player, @shape.body.a * 180.0 / Math::PI + 90)
-		@cur_image.draw_rot(
-			@shape.body.p.x - @window.camera_x,
-			@shape.body.p.y - @window.camera_y,
-			ZOrder::Player,
-			@shape.body.a * 180.0 / Math::PI + 90
-		)
-=end
-
 		i = 0
 		@body_parts.each do |part, coords|
 			zorder = (part == 'torso') ? ZOrder::Player + 5 : ZOrder::Player + i
 			if part == :upper_right_arm
 				swing = 35 * Math.sin(milliseconds / 300.0)
+				swing = 0
 			else
 				swing = 0
 			end
 
-			angle = @shape.body.a.radians_to_gosu
-			
 			offset = coords[0]
 			origin = coords[1]
 
-			offset_distance = offset[0].distance_to offset[1]
-			if (offset[0] and offset[1]) != 0
-				offset_angle = Math::sin(offset[0] / offset[1]) / (180.0 / Math::PI)
-			else
-				offset_angle = 0
-			end
+			distance = Math.hypot(offset[0], offset[1])
+			theta = Math.atan2(offset[0], offset[1]) + @shape.body.a
 
-			angle_offset_x = offset_distance * Math::cos(angle.gosu_to_radians - offset_angle)
-			angle_offset_y = offset_distance * Math::sin(angle.gosu_to_radians - offset_angle)
-
-			if @blah == nil
-				@blah = 0
-			end
-			if @blah < 1 and angle_offset_x != 0
-				p part
-				p offset[0]
-				p offset[1]
-				p offset[0]**2 + offset[1]**2
-				p offset_angle
-				p Math::cos(angle.gosu_to_radians - offset_angle)
-				p angle_offset_x
-				p angle_offset_y
-				@blah += 1
-			end
+			offset_x = distance * Math::cos(theta)
+			offset_y = distance * Math::sin(theta)
 
 			@part_images[part].draw_rot(
-				@shape.body.p.x - @window.camera_x - angle_offset_x,
-				@shape.body.p.y - @window.camera_y + angle_offset_y,
+				@shape.body.p.x - @window.camera_x + offset_x,
+				@shape.body.p.y - @window.camera_y + offset_y,
 				zorder,
 				@shape.body.a.radians_to_gosu + swing,
 				origin[0], origin[1]
