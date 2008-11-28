@@ -36,7 +36,7 @@ class Game < Window
 
 	def initialize
 		super(Screen::Width, Screen::Height, false)
-		self.caption = "Cptn. Ruby"
+		self.caption = "Kanzapanoid"
 
 		# Put the beep here, as it is the environment now that determines collision
 		@beep = Gosu::Sample.new(self, "media/Beep.wav")
