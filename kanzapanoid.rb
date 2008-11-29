@@ -21,6 +21,7 @@ SUBSTEPS = 1
 
 $LOAD_PATH.push 'lib/'
 
+require 'audio'
 require 'vectormap'
 require 'player'
 require 'items'
@@ -61,6 +62,8 @@ class Game < Window
 
 		@map = VectorMap.new self
 		@map.open 'test'
+
+		@audio = Audio.new self, 'steps'
 	end
 
 	def update
@@ -98,6 +101,7 @@ class Game < Window
 		end
 
 		@player.update
+		@audio.update
 	end
 
 	def draw
