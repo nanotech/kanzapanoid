@@ -11,8 +11,8 @@ class Character
 		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
 		# We'll use s simple, 4 sided Poly for our Player
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_width = 185.0
-		shape_height = 100.0
+		shape_width = 120.0
+		shape_height = 65.0
 		shape_array = [
 			CP::Vec2.new(-shape_width, -shape_height), # top left
 			CP::Vec2.new(-shape_width, shape_height), # bottom left
@@ -58,22 +58,22 @@ class Character
 				angle = 55 * -Math.sin(milliseconds / 300.0)
 
 			elsif name == :lower_right_arm
-				angle = 25 * Math.sin(milliseconds / 300.0) - 20
+				angle = 20 * Math.sin(milliseconds / 300.0) - 40
 			elsif name == :lower_left_arm
-				angle = 25 * -Math.sin(milliseconds / 300.0) - 20
+				angle = 20 * -Math.sin(milliseconds / 300.0) - 40
 
 			elsif name == :upper_right_leg
-				angle = 15 * Math.sin(milliseconds / 300.0)
+				angle = 15 * Math.sin(milliseconds / 300.0) - 5
 			elsif name == :upper_left_leg
-				angle = 15 * -Math.sin(milliseconds / 300.0)
+				angle = 15 * -Math.sin(milliseconds / 300.0) - 5
 
 			elsif name == :lower_right_leg
-				angle = 15 * Math.sin(milliseconds / 300.0)
+				angle = 15 * Math.sin(milliseconds / 300.0) + 5
 			elsif name == :lower_left_leg
-				angle = 15 * -Math.sin(milliseconds / 300.0)
+				angle = 15 * -Math.sin(milliseconds / 300.0) + 5
 
 			elsif name == :head
-				angle = 5 * Math.sin(milliseconds / 150.0)
+				angle = 5 * Math.sin(milliseconds / 300.0)
 			else
 				angle = 0
 			end
