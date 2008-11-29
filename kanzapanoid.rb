@@ -39,9 +39,6 @@ class Game < Window
 		super(Screen::Width, Screen::Height, false)
 		self.caption = "Kanzapanoid"
 
-		# Put the beep here, as it is the environment now that determines collision
-		@beep = Gosu::Sample.new(self, "media/Beep.wav")
-
 		# Put the score here, as it is the environment that tracks this now
 		@score = 0
 		@font = Gosu::Font.new(self, Gosu::default_font_name, 20)
@@ -64,6 +61,7 @@ class Game < Window
 		@map.open 'test'
 
 		@audio = Audio.new self, 'steps'
+		@beep = @audio.load 'beep'
 	end
 
 	def update
@@ -111,6 +109,7 @@ class Game < Window
 
 	def button_down(id)
 		if id == Button::KbEscape then close end
+		if id == Button::KbSpace then @audio.play @beep end
 	end
 end
 
