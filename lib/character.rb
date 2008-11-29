@@ -11,12 +11,13 @@ class Character
 		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
 		# We'll use s simple, 4 sided Poly for our Player
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_size = 25.0
+		shape_width = 185.0
+		shape_height = 100.0
 		shape_array = [
-			CP::Vec2.new(-shape_size, -shape_size), # top left
-			CP::Vec2.new(-shape_size, shape_size), # bottom left
-			CP::Vec2.new(shape_size, shape_size), # bottom right
-			CP::Vec2.new(shape_size, -shape_size) # top right
+			CP::Vec2.new(-shape_width, -shape_height), # top left
+			CP::Vec2.new(-shape_width, shape_height), # bottom left
+			CP::Vec2.new(shape_width, shape_height), # bottom right
+			CP::Vec2.new(shape_width, -shape_height) # top right
 		]
 		@shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
 
@@ -29,73 +30,97 @@ class Character
 		body.add_to_space(@window.space)
 		@shape.add_to_space(@window.space)
 
-		@map = window.map
-
-		# Load all animation frames
-		@standing, @walk1, @walk2, @jump =
-			*Image.load_tiles(window, "media/CptnRuby.png", 50, 50, false)
-		# This always points to the frame that is currently drawn.
-		# This is set in update, and used in draw.
-		@cur_image = @standing
-
 		# Keep in mind that down the screen is positive y, which means that PI/2 radians,
 		# which you might consider the top in the traditional Trig unit circle sense is actually
 		# the bottom; thus 3PI/2 is the top
 		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
 
-		@body_parts = []
-		@part_images = {}
+		@body_parts = {}
 	end
 
 	def draw(screen_x, screen_y)
-		i = 0
-		@body_parts.each do |part, coords|
-			zorder = (part == 'torso') ? ZOrder::Player + 5 : ZOrder::Player + i
-			if part == :upper_right_arm
-				swing = 35 * Math.sin(milliseconds / 300.0)
-				swing = 0
-			else
-				swing = 0
-			end
-
-			offset = coords[0]
-			origin = coords[1]
-
-			distance = Math.hypot(offset[0], offset[1])
-			theta = Math.atan2(offset[0], offset[1]) + @shape.body.a
-
-			offset_x = distance * Math::cos(theta)
-			offset_y = distance * Math::sin(theta)
-
-			@part_images[part].draw_rot(
-				@shape.body.p.x - @window.camera_x + offset_x,
-				@shape.body.p.y - @window.camera_y + offset_y,
-				zorder,
-				@shape.body.a.radians_to_gosu + swing,
-				origin[0], origin[1]
+		@body_parts.each do |name, part|
+			part[:image].draw_rot(
+				@shape.body.p.x - @window.camera_x + @body_parts[name][:offset_x],
+				@shape.body.p.y - @window.camera_y + @body_parts[name][:offset_y],
+				part[:z],
+				@shape.body.a.radians_to_gosu + @body_parts[name][:angle],
+				part[:origin][:x], part[:origin][:y]
 			)
-			i += 1
 		end
 	end
 
 	def update
-		# Select image depending on action
-		if !@window.button_down? Gosu::KbLeft and !@window.button_down? Gosu::KbRight
-			@cur_image = @standing
-		else
-			@cur_image = (milliseconds / 175 % 2 == 0) ? @walk1 : @walk2
-		end
-		if @shape.body.v.y < 0
-			@cur_image = @jump
+		@body_parts.each do |name, part|
+			if name == :upper_right_arm
+				angle = 55 * Math.sin(milliseconds / 300.0)
+			elsif name == :upper_left_arm
+				angle = 55 * -Math.sin(milliseconds / 300.0)
+
+			elsif name == :lower_right_arm
+				angle = 25 * Math.sin(milliseconds / 300.0) - 20
+			elsif name == :lower_left_arm
+				angle = 25 * -Math.sin(milliseconds / 300.0) - 20
+
+			elsif name == :upper_right_leg
+				angle = 15 * Math.sin(milliseconds / 300.0)
+			elsif name == :upper_left_leg
+				angle = 15 * -Math.sin(milliseconds / 300.0)
+
+			elsif name == :lower_right_leg
+				angle = 15 * Math.sin(milliseconds / 300.0)
+			elsif name == :lower_left_leg
+				angle = 15 * -Math.sin(milliseconds / 300.0)
+
+			elsif name == :head
+				angle = 5 * Math.sin(milliseconds / 150.0)
+			else
+				angle = 0
+			end
+
+			theta = Math.atan2(part[:x], part[:y]) + @shape.body.a
+			if part[:parent] and @body_parts[part[:parent]][:angle]
+				theta += @body_parts[part[:parent]][:angle].degrees_to_radians - 90
+			end
+
+			offset_x = part[:radius] * Math::cos(theta)
+			offset_y = part[:radius] * Math::sin(theta)
+
+			if part[:parent] and @body_parts[part[:parent]][:offset_x]
+				offset_x += @body_parts[part[:parent]][:offset_x]
+				offset_y += @body_parts[part[:parent]][:offset_y]
+				angle += @body_parts[part[:parent]][:angle]
+			end
+
+			@body_parts[name][:offset_x] = offset_x
+			@body_parts[name][:offset_y] = offset_y
+			@body_parts[name][:angle] = angle
 		end
 	end
 
 	def load_parts(parts)
-		parts.each do |part, coords|
-			@part_images[part] = Image.new(@window, 'media/' + self.class.name.downcase + '/' + part.to_s + '.png', true)
-		end
+		parts.each do |name, data|
+			image = Image.new(@window, 'media/' + self.class.name.downcase + '/' + name.to_s + '.png', true)
 
-		@body_parts = parts
+			part = {
+				:image => image,
+
+				:x => data[0][0],
+				:y => data[0][1],
+				:z => data[2],
+
+				:origin => {
+					:x => data[1][0],
+					:y => data[1][1]
+				},
+
+				:parent => data[3]
+			}
+
+			part[:radius] = Math.hypot(part[:x], part[:y])
+
+			@body_parts[name] = part
+		end
 	end
 
 	def warp(vect); @shape.body.p = vect end
