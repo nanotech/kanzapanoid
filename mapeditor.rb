@@ -29,9 +29,6 @@ class Game < Gosu::Window
 		super(Screen::Width, Screen::Height, false)
 		self.caption = "Kanzapanoid Map Editor"
 
-		# Put the beep here, as it is the environment now that determines collision
-		@beep = Gosu::Sample.new(self, "media/Beep.wav")
-
 		# Put the score here, as it is the environment that tracks this now
 		@score = 0
 		@font = Gosu::Font.new(self, Gosu::default_font_name, 20)
