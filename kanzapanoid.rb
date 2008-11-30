@@ -21,6 +21,7 @@ SUBSTEPS = 1
 
 $LOAD_PATH.push 'lib/'
 
+require 'audio'
 require 'vectormap'
 require 'player'
 require 'items'
@@ -37,9 +38,6 @@ class Game < Window
 	def initialize
 		super(Screen::Width, Screen::Height, false)
 		self.caption = "Kanzapanoid"
-
-		# Put the beep here, as it is the environment now that determines collision
-		@beep = Gosu::Sample.new(self, "media/Beep.wav")
 
 		# Put the score here, as it is the environment that tracks this now
 		@score = 0
@@ -61,6 +59,9 @@ class Game < Window
 
 		@map = VectorMap.new self
 		@map.open 'test'
+
+		@audio = Audio.new self, 'steps'
+		@beep = @audio.load 'beep'
 	end
 
 	def update
@@ -98,6 +99,7 @@ class Game < Window
 		end
 
 		@player.update
+		@audio.update
 	end
 
 	def draw
@@ -107,6 +109,13 @@ class Game < Window
 
 	def button_down(id)
 		if id == Button::KbEscape then close end
+		if id == Button::KbSpace then @audio.play @beep; @audio.samples[0].reset end
+		if id == Button::KbLeftShift then @audio.samples[0].left end
+		if id == Button::KbRightShift then @audio.samples[0].right end
+		if id == Button::Kb1 then @audio.samples[0].fade_out end
+		if id == Button::Kb2 then @audio.samples[0].fade_in end
+		if id == Button::Kb3 then @audio.samples[0].speed_to(0) end
+		if id == Button::Kb4 then @audio.samples[0].speed_to(2) end
 	end
 end
 
