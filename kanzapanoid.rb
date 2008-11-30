@@ -109,7 +109,13 @@ class Game < Window
 
 	def button_down(id)
 		if id == Button::KbEscape then close end
-		if id == Button::KbSpace then @audio.play @beep end
+		if id == Button::KbSpace then @audio.play @beep; @audio.samples[0].reset end
+		if id == Button::KbLeftShift then @audio.samples[0].left end
+		if id == Button::KbRightShift then @audio.samples[0].right end
+		if id == Button::Kb1 then @audio.samples[0].fade_out end
+		if id == Button::Kb2 then @audio.samples[0].fade_in end
+		if id == Button::Kb3 then @audio.samples[0].speed_to(0) end
+		if id == Button::Kb4 then @audio.samples[0].speed_to(2) end
 	end
 end
 
