@@ -98,7 +98,6 @@ class Game < Window
 			@space.step(@dt)
 		end
 
-		@player.update
 		@audio.update
 	end
 

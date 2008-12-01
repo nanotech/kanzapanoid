@@ -40,18 +40,6 @@ class Character
 
 	def draw(screen_x, screen_y)
 		@body_parts.each do |name, part|
-			part[:image].draw_rot(
-				@shape.body.p.x - @window.camera_x + @body_parts[name][:offset_x],
-				@shape.body.p.y - @window.camera_y + @body_parts[name][:offset_y],
-				part[:z],
-				@shape.body.a.radians_to_gosu + @body_parts[name][:angle],
-				part[:origin][:x], part[:origin][:y]
-			)
-		end
-	end
-
-	def update
-		@body_parts.each do |name, part|
 			if name == :upper_right_arm
 				angle = 55 * Math.sin(milliseconds / 300.0)
 			elsif name == :upper_left_arm
@@ -95,6 +83,14 @@ class Character
 			@body_parts[name][:offset_x] = offset_x
 			@body_parts[name][:offset_y] = offset_y
 			@body_parts[name][:angle] = angle
+
+			part[:image].draw_rot(
+				@shape.body.p.x - @window.camera_x + offset_x,
+				@shape.body.p.y - @window.camera_y + offset_y,
+				part[:z],
+				@shape.body.a.radians_to_gosu + angle,
+				part[:origin][:x], part[:origin][:y]
+			)
 		end
 	end
 
