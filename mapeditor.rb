@@ -55,7 +55,7 @@ class Game < Gosu::Window
 	def draw
 		self.draw_line(mouse_x, mouse_y, @mouseColors[@mode],
 					   mouse_x + 20, mouse_y + 20, 0xffffffff,
-					   ZOrder::UI)
+					   ZOrder::UI + 10)
 		@editor.draw
 		@input.draw
 	end
@@ -63,10 +63,10 @@ class Game < Gosu::Window
 	def button_down(id)
 		if @mode == 1
 			if id == Gosu::KbEscape then close end
-			if id == Gosu::MsLeft then @editor.addVertex(mouse_x + @camera_x, mouse_y + @camera_y) end
-			if id == Gosu::MsRight then @editor.cancelLine end
-			if id == self.char_to_button_id('c') then @editor.closePoly end
-			if id == self.char_to_button_id('u') then @editor.undo end
+			if id == Gosu::MsLeft then @editor.click(mouse_x + @camera_x, mouse_y + @camera_y) end
+			if id == Gosu::MsRight then @editor.undo_line end
+			if id == self.char_to_button_id('c') then @editor.close_poly end
+			if id == self.char_to_button_id('u') then @editor.undo_poly end
 			if id == self.char_to_button_id('s') then @editor.map.save end
 		elsif @mode == 0
 			if id == Gosu::KbEscape then
@@ -106,19 +106,20 @@ class Game < Gosu::Window
 	end
 end
 
+module LineColor
+	Error = 0xffcc3300
+	Active = 0xff009933
+	Inactive = 0xff0099cc
+	Selected = 0xff00ff00
+end
+
 class MapEditor
 	attr_reader :map
 
 	def initialize(window)
 		@window = window
 		@map = VectorMap.new window, true
-	end
-
-	module LineColor
-		Error = 0xffcc3300
-		Active = 0xff009933
-		Inactive = 0xff0099cc
-		Selected = 0xff00ff00
+		@open_poly = nil
 	end
 
 	def draw
@@ -126,60 +127,44 @@ class MapEditor
 		@camera_y = @window.camera_y
 
 		@map.draw
-
 		@map.polys.each do |poly|
-			poly.each do |line|
-				@window.draw_line(
-					line[0][0] - @camera_x, line[0][1] - @camera_y, LineColor::Inactive,
-					line[1][0] - @camera_x, line[1][1] - @camera_y, LineColor::Inactive,
-					ZOrder::Lines)
+			poly.draw @window, @open_poly
+		end
+
+		if @open_poly and @open_poly.vertices.last
+			# This line goes from the mouse to the last vertex in the poly.
+			@window.draw_line(@open_poly.vertices.last[0], @open_poly.vertices.last[1], LineColor::Active,
+							  @window.mouse_x, @window.mouse_y, LineColor::Selected,
+							  ZOrder::UI)
+
+			# This line goes from the mouse to the first vertex in the poly.
+			if @open_poly.vertices[-2]
+				@window.draw_line(@open_poly.vertices.first[0], @open_poly.vertices.first[1], LineColor::Active,
+								  @window.mouse_x, @window.mouse_y, LineColor::Selected,
+								  ZOrder::UI)
+			end
+
+			# Draw a line that shows the actual shape of the poly if you close it,
+			# but only draw it if there are more than two vertices in the poly.
+			if @open_poly.vertices.size > 2
+				@window.draw_line(@open_poly.vertices.first[0], @open_poly.vertices.first[1], LineColor::Active,
+								  @open_poly.vertices.last[0], @open_poly.vertices.last[1], LineColor::Active,
+								  ZOrder::Lines + 1)
 			end
 		end
-		@map.poly.each do |line|
-			@window.draw_line(line[0][0] - @camera_x, line[0][1] - @camera_y, LineColor::Active,
-							  line[1][0] - @camera_x, line[1][1] - @camera_y, LineColor::Active,
-							  ZOrder::Lines)
+	end
+
+	def click(x, y)
+		if !@open_poly
+			@open_poly = @map.new_poly
 		end
-		@map.line.each do |vertex|
-			#@pixel.draw_rot(vertex[0], vertex[1], ZOrder::Lines, 0, 0.5, 0.5, 10, 10)
-			@window.draw_line(vertex[0] - @camera_x, vertex[1] - @camera_y, LineColor::Active,
-							  @window.mouse_x, @window.mouse_y, LineColor::Selected,
-							  ZOrder::Lines)
-		end
+
+		@open_poly.add_vertex(x, y)
 	end
 
-	def addVertex(x, y)
-		@map.line.push [x, y]
-		self.closeLine
-	end
-
-	def cancelLine
-		@map.line.clear
-		if @map.poly.size > 0
-			@map.line.push @map.poly.pop[0]
-		end
-	end
-
-	def undo
-		@map.polys.pop
-	end
-
-	def closeLine
-		if @map.line.size >= 2
-			@map.poly.push @map.line.dup
-			@map.line = [@map.line.dup[1]]
-		end
-	end
-
-	def closePoly
-		@map.line.push @map.poly.first[0]
-		self.closeLine
-		@map.polys.push @map.poly.dup
-
-		# Start new line and poly
-		@map.line.clear
-		@map.poly.clear
-	end
+	def undo_line; @open_poly.vertices.pop; end
+	def undo_poly; @map.polys.pop; end
+	def close_poly; @open_poly = nil; end
 end
 
 class TextField < Gosu::TextInput

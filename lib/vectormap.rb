@@ -1,3 +1,5 @@
+require 'yaml'
+
 class VectorMap
 	attr_accessor :layers, :polys, :poly, :line
 
@@ -31,7 +33,8 @@ class VectorMap
 
 	module FileNames
 		Folder = 'maps/'
-		Vectors = 'vectors.txt'
+		Vectors = 'vectors.yml'
+		Layers = 'layer'
 	end
 
 	def open(mapName)
@@ -47,20 +50,35 @@ class VectorMap
 
 		if File.exists? @mapFolder
 			Dir.foreach(@mapFolder) do |f|
-				if f.include? 'layer'
+				if f.include? FileNames::Layers
 					@layers.push Gosu::Image.new(@window, @mapFolder + f, true)
 				end
 			end
 		end
 
+		body = CP::Body.new(8**10, 8**10) if @editorMode == false
+
 		if File.exists? @vectorFile
-			# Read entire file, stripping surrounding white space on each line.
-			lines = File.readlines(@vectorFile).map { |line| line.chop }
+			@polys = YAML::load_file(@vectorFile)
 
-			vertices = []
+			if @editorMode == false
+				@polys.each do |poly|
+					@cp_vertices = []
+					poly.vertices.each_index do |vertex|
+						@cp_vertices[vertex] = CP::Vec2.new(*poly.vertices[vertex])
+					end
 
+					shape = CP::Shape::Poly.new(body, @cp_vertices, CP::Vec2.new(0,0))
+					shape.u = 0.5 # friction
+					@window.space.add_static_shape(shape)
+				end
+			end
+
+		elsif File.exists? @mapFolder + 'vectors.txt'
 			mode = ParseMode::None
-			body = CP::Body.new(8**10, 8**10) if @editorMode == false
+			vertices = []
+			# Read entire file, stripping surrounding white space on each line.
+			lines = File.readlines(@mapFolder + 'vectors.txt').map { |line| line.chop }
 
 			lines.each do |line|
 				oldmode = mode
@@ -76,18 +94,11 @@ class VectorMap
 
 				if line == 'end'
 					if mode == ParseMode::EditorPoly
-						newVertices = []
+						open_poly = new_poly
 
-						many = vertices.size
-						many.times do |i|
-							if i == many
-								newVertices.push [vertices[i], vertices[i+1]]
-							else
-								newVertices.push [vertices[i], vertices[i-1]]
-							end
+						vertices.each do |vertex|
+							open_poly.add_vertex(vertex[0], vertex[1])
 						end
-
-						@polys.push newVertices
 					end
 
 					if mode == ParseMode::ChipmunkPoly
@@ -111,26 +122,43 @@ class VectorMap
 	end
 
 	def save
-		data = ''
-
-		@polys.each do |poly|
-			data << "poly\n"
-
-			poly.each do |line|
-				# This converts from lines to vertices
-				# and adds it to the data string.
-				data << "#{line[0][0]} #{line[0][1]}\n"
-			end
-
-			data << "end\n"
-		end
-
-		data << "\n"
-
 		# Create a folder for the map if it doesn't exist
 		if !File.directory? @mapFolder then Dir.mkdir @mapFolder end
 
 		# Write to disk
-		File.open(@vectorFile, 'w') { |f| f.write(data) }
+		File.open(@vectorFile, 'w') { |f| f.write(@polys.to_yaml) }
+	end
+
+	def new_poly
+		@polys.push Polygon.new
+		@polys.last
+	end
+end
+
+class Polygon
+	attr_accessor :vertices
+
+	def initialize
+		@vertices = []
+	end
+
+	def draw(window, open_poly=nil)
+		if self == open_poly
+			color = LineColor::Active
+		else
+			color = LineColor::Inactive
+		end
+
+		@vertices.each_index do |id|
+			window.draw_line(@vertices[id - 1][0] - window.camera_x,
+							 @vertices[id - 1][1] - window.camera_y, color,
+							 @vertices[id][0] - window.camera_x,
+							 @vertices[id][1] - window.camera_y, color,
+							 ZOrder::Lines)
+		end
+	end
+
+	def add_vertex(x, y)
+		@vertices.push [x, y]
 	end
 end
