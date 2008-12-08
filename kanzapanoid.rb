@@ -103,7 +103,7 @@ class Game < Window
 
 	def draw
 		@map.draw
-		@player.draw @camera_x, @camera_y
+		@player.draw
 	end
 
 	def button_down(id)

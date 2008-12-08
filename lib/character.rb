@@ -1,5 +1,7 @@
+require 'body_part'
+
 class Character
-	attr_reader :shape
+	attr_reader :shape, :body_parts, :window
 
 	def initialize(window, position=Screen::Center)
 		@window = window
@@ -38,37 +40,9 @@ class Character
 		@body_parts = {}
 	end
 
-	def draw(screen_x, screen_y)
-		@body_parts.each do |name, part|
-
-			angle = animate(name)
-			angle = @body_parts[name][:angle] unless angle
-
-			theta = Math.atan2(part[:x], part[:y]) + @shape.body.a
-			if part[:parent] and @body_parts[part[:parent]][:angle]
-				theta += @body_parts[part[:parent]][:angle].degrees_to_radians - 90
-			end
-
-			offset_x = part[:radius] * Math::cos(theta)
-			offset_y = part[:radius] * Math::sin(theta)
-
-			if part[:parent] and @body_parts[part[:parent]][:offset_x]
-				offset_x += @body_parts[part[:parent]][:offset_x]
-				offset_y += @body_parts[part[:parent]][:offset_y]
-				angle += @body_parts[part[:parent]][:angle]
-			end
-
-			@body_parts[name][:offset_x] = offset_x
-			@body_parts[name][:offset_y] = offset_y
-			@body_parts[name][:angle] = angle
-
-			part[:image].draw_rot(
-				@shape.body.p.x - @window.camera_x + offset_x,
-				@shape.body.p.y - @window.camera_y + offset_y,
-				part[:z],
-				@shape.body.a.radians_to_gosu + angle,
-				part[:origin][:x], part[:origin][:y]
-			)
+	def draw
+		@body_parts.each do |part_name, part|
+			part.draw animate(part_name)
 		end
 	end
 
@@ -76,30 +50,15 @@ class Character
 
 	def load_parts(parts)
 		parts.each do |name, data|
-			image = Image.new(@window, 'media/' + self.class.name.downcase + '/' + name.to_s + '.png', true)
+			image = Image.new(@window,
+							  'media/' + self.class.name.downcase \
+							  + '/' + name.to_s + '.png', false)
+			xyz = data[0]
+			xyz[2] = data[2]
+			origin = data[1]
+			parent = data[3]
 
-			part = {
-				:image => image,
-
-				:x => data[0][0],
-				:y => data[0][1],
-				:z => data[2],
-
-				:origin => {
-					:x => data[1][0],
-					:y => data[1][1]
-				},
-
-				:parent => data[3],
-
-				:offset_x => 0.5,
-				:offset_y => 0.5,
-				:angle => 0.0,
-			}
-
-			part[:radius] = Math.hypot(part[:x], part[:y])
-
-			@body_parts[name] = part
+			@body_parts[name] = BodyPart.new(self, xyz, origin, image, parent)
 		end
 	end
 
