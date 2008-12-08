@@ -40,31 +40,9 @@ class Character
 
 	def draw(screen_x, screen_y)
 		@body_parts.each do |name, part|
-			if name == :upper_right_arm
-				angle = 55 * Math.sin(milliseconds / 300.0)
-			elsif name == :upper_left_arm
-				angle = 55 * -Math.sin(milliseconds / 300.0)
 
-			elsif name == :lower_right_arm
-				angle = 20 * Math.sin(milliseconds / 300.0) - 40
-			elsif name == :lower_left_arm
-				angle = 20 * -Math.sin(milliseconds / 300.0) - 40
-
-			elsif name == :upper_right_leg
-				angle = 15 * Math.sin(milliseconds / 300.0) - 5
-			elsif name == :upper_left_leg
-				angle = 15 * -Math.sin(milliseconds / 300.0) - 5
-
-			elsif name == :lower_right_leg
-				angle = 15 * Math.sin(milliseconds / 300.0) + 5
-			elsif name == :lower_left_leg
-				angle = 15 * -Math.sin(milliseconds / 300.0) + 5
-
-			elsif name == :head
-				angle = 5 * Math.sin(milliseconds / 300.0)
-			else
-				angle = 0
-			end
+			angle = animate(name)
+			angle = @body_parts[name][:angle] unless angle
 
 			theta = Math.atan2(part[:x], part[:y]) + @shape.body.a
 			if part[:parent] and @body_parts[part[:parent]][:angle]
@@ -94,6 +72,8 @@ class Character
 		end
 	end
 
+	def animate(part=false); 0; end
+
 	def load_parts(parts)
 		parts.each do |name, data|
 			image = Image.new(@window, 'media/' + self.class.name.downcase + '/' + name.to_s + '.png', true)
@@ -110,7 +90,11 @@ class Character
 					:y => data[1][1]
 				},
 
-				:parent => data[3]
+				:parent => data[3],
+
+				:offset_x => 0.5,
+				:offset_y => 0.5,
+				:angle => 0.0,
 			}
 
 			part[:radius] = Math.hypot(part[:x], part[:y])
