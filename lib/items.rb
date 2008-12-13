@@ -4,7 +4,6 @@ class Items
 	attr_accessor :items
 
 	def initialize(window)
-		@window = window
 		@items = []
 	end
 

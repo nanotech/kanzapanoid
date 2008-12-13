@@ -23,7 +23,7 @@ require 'text_field'
 
 # Layering of sprites
 module ZOrder
-	Background, Lines, Vertices, UI = 0, 40, 50, 100
+	Background, Items, Lines, Vertices, UI = 0, 20, 40, 50, 100
 end
 
 class Editor < Gosu::Window
@@ -78,18 +78,21 @@ class Editor < Gosu::Window
 	# Also recognises the editing mode that the user is in and
 	# uses the appropriate key mappings for that mode.
 	def button_down(id)
+
+		# Global
+		if id == Gosu::KbEscape then close end
+		if id == self.char_to_button_id('s') then @editor.map.save end
+
 		case @mode
 
 		# Polygons
 		when 1
-			if id == Gosu::KbEscape then close end
 			if id == Gosu::MsLeft
 				@editor.add_vertex(mouse_x + camera_x, mouse_y + camera_y) 
 			end
 			if id == Gosu::MsRight then @editor.undo_line end
 			if id == self.char_to_button_id('c') then @editor.close_poly end
 			if id == self.char_to_button_id('u') then @editor.undo_poly end
-			if id == self.char_to_button_id('s') then @editor.map.save end
 
 		# Items
 		when 2
@@ -146,34 +149,29 @@ module LineColor
 end
 
 class MapEditor
-	attr_reader :map
+	attr_reader :map, :open_poly, :window
 
 	def initialize(window)
 		@window = window
 		@map = VectorMap.new window, true
 		@open_poly = nil
-		@items = Items.new self
 	end
 
 	def draw
-		@camera_x = @window.camera_x
-		@camera_y = @window.camera_y
-
-		@map.draw
-		@map.polys.each do |poly|
-			poly.draw @window, @open_poly
-		end
+		@map.draw self
 
 		if @open_poly and @open_poly.vertices.last
 
 			# This line goes from the mouse to the last vertex in the poly.
-			@window.draw_line(@open_poly.vertices.last[0], @open_poly.vertices.last[1], LineColor::Active,
+			@window.draw_line(@open_poly.vertices.last[0] - @window.camera_x,
+							  @open_poly.vertices.last[1] - @window.camera_y, LineColor::Active,
 							  @window.mouse_x, @window.mouse_y, LineColor::Selected,
 							  ZOrder::UI)
 
 			# This line goes from the mouse to the first vertex in the poly.
 			if @open_poly.vertices[-2]
-				@window.draw_line(@open_poly.vertices.first[0], @open_poly.vertices.first[1], LineColor::Active,
+				@window.draw_line(@open_poly.vertices.first[0] - @window.camera_x,
+								  @open_poly.vertices.first[1] - @window.camera_y, LineColor::Active,
 								  @window.mouse_x, @window.mouse_y, LineColor::Selected,
 								  ZOrder::UI)
 			end
@@ -181,13 +179,13 @@ class MapEditor
 			# Draw a line that shows the actual shape of the poly if you close it,
 			# but only draw it if there are more than two vertices in the poly.
 			if @open_poly.vertices.size > 2
-				@window.draw_line(@open_poly.vertices.first[0], @open_poly.vertices.first[1], LineColor::Active,
-								  @open_poly.vertices.last[0], @open_poly.vertices.last[1], LineColor::Active,
+				@window.draw_line(@open_poly.vertices.first[0] - @window.camera_x,
+								  @open_poly.vertices.first[1] - @window.camera_y, LineColor::Active,
+								  @open_poly.vertices.last[0] - @window.camera_x,
+								  @open_poly.vertices.last[1] - @window.camera_y, LineColor::Active,
 								  ZOrder::Lines + 1)
 			end
 		end
-
-		@items.draw
 	end
 
 	def add_vertex(x, y)
@@ -199,11 +197,11 @@ class MapEditor
 	end
 
 	def add_item(x, y)
-		@items.add CollectibleGem.new(@window, CP::Vec2.new(x,y))
+		@map.items.add CollectibleGem.new(@window, CP::Vec2.new(x,y))
 	end
 
 	def undo_item
-		@items.items.pop.destroy
+		@map.items.items.pop.destroy
 	end
 
 	def undo_line

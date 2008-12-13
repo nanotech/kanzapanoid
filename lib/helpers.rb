@@ -13,6 +13,24 @@ class String
 		vertex = self.split
 		CP::Vec2.new(vertex[0].to_f, vertex[1].to_f)
 	end
+
+	# The reverse of camelize.
+	# Makes an underscored, lowercase form from the expression in the string.
+	#
+	# Borrowed from Rail's ActiveSupport::Inflector.
+	def underscore
+		self.to_s.gsub(/::/, '/').
+			gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+			gsub(/([a-z\d])([A-Z])/,'\1_\2').
+			tr("-", "_").
+			downcase
+	end
+end
+
+def create(item, *args)
+	require item.to_s.underscore
+	Kernel.const_get(item.to_s).new(*args)
 end
 
 require 'chipmunk_object.rb'
+require 'chipmunk_yaml.rb'

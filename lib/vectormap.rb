@@ -1,7 +1,7 @@
 require 'yaml'
 
 class VectorMap
-	attr_accessor :layers, :polys, :poly, :line
+	attr_accessor :layers, :polys, :poly, :line, :items
 
 	def initialize(window, editorMode = false)
 		@window = window
@@ -10,10 +10,19 @@ class VectorMap
 		@polys = []
 		@poly = []
 		@line = []
+		@items = Items.new self
 		@zincrement = 1
+
+		YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', 'item') do |type, val|
+			Item.new(@window, val['image'], val['shape'], CP::Vec2.new(val['x'], val['y']))
+		end
+
+		YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', 'item-CollectibleGem') do |type, val|
+			create(:CollectibleGem, @window, CP::Vec2.new(val['x'], val['y']))
+		end
 	end
 
-	def draw
+	def draw(editor=nil)
 		layerZ = ZOrder::Background
 		@layers.each do |layer|
 			layer.draw(-@window.camera_x, -@window.camera_y, layerZ)
@@ -23,6 +32,9 @@ class VectorMap
 			# some time in the future.
 			layerZ += @zincrement
 		end
+
+		@polys.each { |p| p.draw editor } if editor
+		@items.draw
 	end
 
 	module ParseMode
@@ -59,7 +71,18 @@ class VectorMap
 		body = CP::Body.new(8**10, 8**10) if @editorMode == false
 
 		if File.exists? @vectorFile
-			@polys = YAML::load_file(@vectorFile)
+			data = []
+
+			File.open(@vectorFile) do |yf|
+				YAML.load_documents(yf) do |ydoc|
+					# ydoc contains the single object
+					# from the YAML document
+					data << ydoc
+				end
+			end
+
+			@polys = data[0]
+			@items = data[1]
 
 			if @editorMode == false
 				@polys.each do |poly|
@@ -74,6 +97,7 @@ class VectorMap
 				end
 			end
 
+		# Backwards compatability code.
 		elsif File.exists? @mapFolder + 'vectors.txt'
 			mode = ParseMode::None
 			vertices = []
@@ -125,8 +149,11 @@ class VectorMap
 		# Create a folder for the map if it doesn't exist
 		if !File.directory? @mapFolder then Dir.mkdir @mapFolder end
 
+		yaml = @polys.to_yaml
+		yaml << @items.to_yaml
+
 		# Write to disk
-		File.open(@vectorFile, 'w') { |f| f.write(@polys.to_yaml) }
+		File.open(@vectorFile, 'w') { |f| f.write(yaml) }
 	end
 
 	def new_poly
@@ -138,16 +165,18 @@ end
 class Polygon
 	attr_accessor :vertices
 
-	def initialize
-		@vertices = []
+	def initialize(vertices=[])
+		@vertices = vertices
 	end
 
-	def draw(window, open_poly=nil)
-		if self == open_poly
+	def draw(editor)
+		if self == editor.open_poly
 			color = LineColor::Active
 		else
 			color = LineColor::Inactive
 		end
+
+		window = editor.window
 
 		@vertices.each_index do |id|
 			window.draw_line(@vertices[id - 1][0] - window.camera_x,
@@ -161,4 +190,27 @@ class Polygon
 	def add_vertex(x, y)
 		@vertices.push [x, y]
 	end
+
+    def to_yaml_type; '!kanzapanoid.nanotechcorp.net,2008-12-08/polygon'; end
+
+	def to_yaml(opts = {})
+		YAML::quick_emit(self, opts) do |out|
+			out.seq(taguri, to_yaml_style) do |seq|
+				@vertices.each do |vertex|
+					seq.add("#{vertex[0]} #{vertex[1]}")
+				end
+			end
+		end
+	end
+end
+
+YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', 'polygon') do |type, val|
+	vertices = []
+	val.each do |vertex|
+		 vertex = vertex.split
+		 vertex[0] = vertex[0].to_f
+		 vertex[1] = vertex[1].to_f
+		 vertices << vertex
+	end
+	Polygon.new(vertices)
 end
