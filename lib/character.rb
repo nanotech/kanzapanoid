@@ -13,13 +13,13 @@ class Character
 		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
 		# We'll use s simple, 4 sided Poly for our Player
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_width = 120.0
-		shape_height = 65.0
+		shape_height = 20.0
+		shape_width = 60.0
 		shape_array = [
-			CP::Vec2.new(-shape_width, -shape_height), # top left
-			CP::Vec2.new(-shape_width, shape_height), # bottom left
-			CP::Vec2.new(shape_width, shape_height), # bottom right
-			CP::Vec2.new(shape_width, -shape_height) # top right
+			CP::Vec2.new(-14, -18), # bottom left
+			CP::Vec2.new(-14, 22), # bottom right
+			CP::Vec2.new(170, 23), # top right
+			CP::Vec2.new(170, -23) # top left
 		]
 		@shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
 

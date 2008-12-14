@@ -24,16 +24,16 @@ class Player < Character
 		# If you exclude a parent, the parent will be the chipmunk body.
 		#
 		parts = {
-			:head => [[2.0,3.0],[0.5,1.7], 3],
-			:torso => [[0.0,0.0],[0.5,0.5], 2],
+			:head => [[2.0,103.0],[0.5,1.7], 3],
+			:torso => [[0.0,100.0],[0.5,0.5], 2],
 
-			:upper_right_arm => [[-6,17],[0.42,0.3], 3],
-			:upper_left_arm => [[1,17],[0.42,0.3], 1],
+			:upper_right_arm => [[-6,117],[0.42,0.3], 3],
+			:upper_left_arm => [[1,117],[0.42,0.3], 1],
 			:lower_right_arm => [[-26,11],[0.3,0.1], 4, :upper_right_arm],
 			:lower_left_arm => [[-26,11],[0.3,0.1], 1, :upper_left_arm],
 
-			:upper_right_leg => [[0,-35],[0.5,0.3], 3],
-			:upper_left_leg => [[5,-33],[0.5,0.3], 1],
+			:upper_right_leg => [[0,65],[0.5,0.3], 3],
+			:upper_left_leg => [[5,67],[0.5,0.3], 1],
 			:lower_right_leg => [[-30,4],[0.8,0.25], 4, :upper_right_leg],
 			:lower_left_leg => [[-30,4],[0.8,0.25], 2, :upper_left_leg],
 
