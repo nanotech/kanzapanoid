@@ -18,7 +18,6 @@ $LOAD_PATH.push 'lib/'
 require 'helpers'
 require 'vectormap'
 require 'items'
-require 'collectible_gem'
 require 'text_field'
 
 # Layering of sprites
@@ -124,9 +123,11 @@ class Editor < Gosu::Window
 					self.text_input = nil 
 				end
 			elsif id == Gosu::KbReturn
-				@map_file = self.text_input.text if self.text_input
-				@editor.map.open @map_file
-				self.text_input = nil 
+				if self.text_input and @map_file != self.text_input.text
+					@map_file = self.text_input.text
+					@editor.map.open @map_file
+					self.text_input = nil
+				end
 			end
 		end
 

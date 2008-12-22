@@ -56,7 +56,10 @@ class VectorMap
 		# If we're in editor mode, get rid of the old map.
 		# This will also need to be implemented for the
 		# game for level switching.
-		@polys.clear if @editorMode == true 
+		if @editorMode == true 
+			@polys.clear 
+			@items.items.clear
+		end
 		# Get rid of old layers
 		@layers.clear
 
