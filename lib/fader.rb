@@ -1,4 +1,5 @@
 class Numeric
+
 	# Original easing equations by [Robert Penner] [1].
 	# Licenced under the [BSD licence] [2].
 	#
@@ -14,7 +15,7 @@ class Numeric
 			when :out then -c * (t/=d)*(t-2) + b
 			when :in_out
 				return c/2*t*t + b if ((t/=d/2) < 1)
-				-c/2 * ((t-=1)*(t-2) - 1) + b;
+				-c/2 * ((t-=1)*(t-2) - 1) + b
 			end
 		when :cubic
 			case direction
@@ -64,22 +65,22 @@ class Numeric
 			end
 		when :elastic
 			s = 1.70158
-			p = 0
+			p = 0.0
 			a = c
-			return b if (t.zero?)
+			return b if t.zero?
 
 			case direction
 			when :in, :out
-				return b + c if ((t/=d)==1)
-				p = d * 0.3 if (p.zero?)
+				return b + c if (t/=d) == 1
+				p = d * 0.3 if p.zero?
 			when :in_out then
-				return b + c if ((t/=d/2)==2)
-				p = d * (0.3*1.5) if (p.zero?)
+				return b + c if (t/=d / 2) == 2
+				p = d * (0.3*1.5) if p.zero?
 			end
 
-			if (a < c.abs)
+			if a < c.abs
 				a = c
-				s = p / 4
+				s = p / 4.0
 			else
 				s = p/(2*Math::PI) * Math.asin(c/a)
 			end
@@ -96,9 +97,37 @@ class Numeric
 				a*(2**(-10*(t-=1))) * Math.sin( (t*d-s)*(2*Math::PI)/p )*0.5 + c + b
 			end
 
-			#
-			# TODO: Add Back and Bounce methods.
-			#
+		when :back
+			s = 1.70158 unless s
+
+			case direction
+			when :in
+				c*(t/=d)*t*((s+1)*t - s) + b
+			when :out
+				c*((t=t/d-1)*t*((s+1)*t + s) + 1) + b
+			when :in_out
+				return c/2*(t*t*(((s*=(1.525))+1)*t - s)) + b if ((t/=d/2) < 1)
+				c/2*((t-=2)*t*(((s*=(1.525))+1)*t + s) + 2) + b
+			end
+
+		when :bounce
+			case direction
+			when :in
+				c - 0.ease(:out, :bounce, d-t, d, c) + b
+			when :out
+				if t/=d < 1/2.75
+					return c*(7.5625*t*t) + b
+				elsif t < 2/2.75
+					return c*(7.5625*(t-=(1.5/2.75))*t + 0.75) + b
+				elsif t < 2.5/2.75
+					return c*(7.5625*(t-=(2.25/2.75))*t + 0.9375) + b
+				else
+					return c*(7.5625*(t-=(2.625/2.75))*t + 0.984375) + b
+				end
+			when :in_out
+				return 0.ease(t*2, 0, d, c) * 0.5 + b if (t < d/2)
+				0.ease(t*2-d, 0, d, c) * 0.5 + c*0.5 + b
+			end
 		else
 			# Default to linear easing
 			c*t/d + b
