@@ -14,7 +14,7 @@ class Numeric
 			when :in then c*(t/=d)*t + b
 			when :out then -c * (t/=d)*(t-2) + b
 			when :in_out
-				return c/2*t*t + b if ((t/=d/2) < 1)
+				return c/2*t*t + b if (t/=d/2) < 1
 				-c/2 * ((t-=1)*(t-2) - 1) + b
 			end
 		when :cubic
@@ -22,7 +22,7 @@ class Numeric
 			when :in then c * (t/d)**3 + b
 			when :out then c * ((t/d-1)**3 + 1) + b
 			when :in_out
-				return c/2 * (t**3) + b if ((t/=d/2) < 1)
+				return c/2 * (t**3) + b if (t/=d/2) < 1
 				c/2 * ((t-2)**3 + 2) + b
 			end
 		when :quart
@@ -30,7 +30,7 @@ class Numeric
 			when :in then c * (t/d)**4 + b
 			when :out then -c * ((t/d-1)**4 - 1) + b
 			when :in_out
-				return c/2 * t**4 + b if ((t/=d/2) < 1)
+				return c/2 * t**4 + b if (t/=d/2) < 1
 				-c/2 * ((t-2)**4 - 2) + b
 			end
 		when :quint
@@ -38,7 +38,7 @@ class Numeric
 			when :in then c * (t/d)**5 + b
 			when :out then c * ((t/d-1)**5 + 1) + b
 			when :in_out
-				return c/2 * t**5 + b if ((t/=d/2) < 1)
+				return c/2 * t**5 + b if (t/=d/2) < 1
 				c/2 * ((t-2)**5 + 2) + b
 			end
 		when :sine
@@ -52,7 +52,7 @@ class Numeric
 			when :in then c * 2**(10 * (t/d - 1)) + b
 			when :out then c * (-(2**(-10 * t/d)) + 1) + b
 			when :in_out
-				return c/2 * 2**(10 * (t - 1)) + b if ((t/=d/2) < 1)
+				return c/2 * 2**(10 * (t - 1)) + b if (t/=d/2) < 1
 				c/2 * (-(2**(-10 * t-=1)) + 2) + b
 			end
 		when :circ
@@ -60,7 +60,7 @@ class Numeric
 			when :in then c * (1 - Math.sqrt(1 - (t/=d)*t)) + b
 			when :out then c * Math.sqrt(1 - (t=t/d-1)*t) + b
 			when :in_out
-				return c/2 * (1 - Math.sqrt(1 - t*t)) + b if ((t/=d/2) < 1)
+				return c/2 * (1 - Math.sqrt(1 - t*t)) + b if (t/=d/2) < 1
 				c/2 * (Math.sqrt(1 - (t-=2)*t) + 1) + b
 			end
 		when :elastic
@@ -93,7 +93,7 @@ class Numeric
 				a*(2**(-10*t)) * Math.sin( (t*d-s)*(2*Math::PI)/p ) + c + b
 
 			when :in_out
-				return -0.5*(a*(2**(10*(t-=1))) * Math.sin( (t*d-s)*(2*Math::PI)/p )) + b if (t < 1)
+				return -0.5*(a*(2**(10*(t-=1))) * Math.sin( (t*d-s)*(2*Math::PI)/p )) + b if t < 1
 				a*(2**(-10*(t-=1))) * Math.sin( (t*d-s)*(2*Math::PI)/p )*0.5 + c + b
 			end
 
@@ -106,7 +106,7 @@ class Numeric
 			when :out
 				c*((t=t/d-1)*t*((s+1)*t + s) + 1) + b
 			when :in_out
-				return c/2*(t*t*(((s*=(1.525))+1)*t - s)) + b if ((t/=d/2) < 1)
+				return c/2*(t*t*(((s*=(1.525))+1)*t - s)) + b if (t/=d/2) < 1
 				c/2*((t-=2)*t*(((s*=(1.525))+1)*t + s) + 2) + b
 			end
 
@@ -115,7 +115,7 @@ class Numeric
 			when :in
 				c - 0.ease(:out, :bounce, d-t, d, c) + b
 			when :out
-				if t/=d < 1/2.75
+				if (t/=d) < 1/2.75
 					return c*(7.5625*t*t) + b
 				elsif t < 2/2.75
 					return c*(7.5625*(t-=(1.5/2.75))*t + 0.75) + b
@@ -125,7 +125,7 @@ class Numeric
 					return c*(7.5625*(t-=(2.625/2.75))*t + 0.984375) + b
 				end
 			when :in_out
-				return 0.ease(t*2, 0, d, c) * 0.5 + b if (t < d/2)
+				return 0.ease(t*2, 0, d, c) * 0.5 + b if t < d/2
 				0.ease(t*2-d, 0, d, c) * 0.5 + c*0.5 + b
 			end
 		else
