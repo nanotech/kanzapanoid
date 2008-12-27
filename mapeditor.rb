@@ -18,7 +18,6 @@ $LOAD_PATH.push 'lib/'
 require 'helpers'
 require 'vectormap'
 require 'items'
-require 'collectible_gem'
 require 'text_field'
 
 # Layering of sprites
@@ -26,9 +25,15 @@ module ZOrder
 	Background, Items, Lines, Vertices, UI = 0, 20, 40, 50, 100
 end
 
+module Mode
+	None = 0
+	Polygons = 1
+	Items = 2
+end
+
 class Editor < Gosu::Window
 	attr_reader :map_file, :layers
-	attr_accessor :space, :camera_x, :camera_y
+	attr_accessor :space, :camera_x, :camera_y, :mode
 
 	MAP_EDITOR = true
 
@@ -44,7 +49,7 @@ class Editor < Gosu::Window
 		# Scrolling is stored as the position of the top left corner of the screen.
 		@camera_x, @camera_y = 0,0
 
-		@mode = 0
+		@mode = Mode::None
 		@mouseColors = [0xff999999, 0xff00ff00, 0xff0000ff, 0xffff0000]
 
 		@map_file = ''
@@ -81,12 +86,14 @@ class Editor < Gosu::Window
 
 		# Global
 		if id == Gosu::KbEscape then close end
-		if id == self.char_to_button_id('s') then @editor.map.save end
+		if id == self.char_to_button_id('s') and @mode != Mode::None
+			@editor.map.save
+		end
 
 		case @mode
 
 		# Polygons
-		when 1
+		when Mode::Polygons
 			if id == Gosu::MsLeft
 				@editor.add_vertex(mouse_x + camera_x, mouse_y + camera_y) 
 			end
@@ -95,14 +102,15 @@ class Editor < Gosu::Window
 			if id == self.char_to_button_id('u') then @editor.undo_poly end
 
 		# Items
-		when 2
+		when Mode::Items
 			if id == Gosu::MsLeft
 				@editor.add_item(mouse_x + camera_x, mouse_y + camera_y)
 			end
 			if id == self.char_to_button_id('u') then @editor.undo_item end
+			if id == Gosu::KbSpace then @editor.switch_tools end
 
 		# Map name text field
-		when 0
+		when Mode::None
 			if id == Gosu::KbEscape then
 				# Escape key will not be 'eaten' by text fields; use for deselecting.
 				if self.text_input then
@@ -124,9 +132,11 @@ class Editor < Gosu::Window
 					self.text_input = nil 
 				end
 			elsif id == Gosu::KbReturn
-				@map_file = self.text_input.text if self.text_input
-				@editor.map.open @map_file
-				self.text_input = nil 
+				if self.text_input and @map_file != self.text_input.text
+					@map_file = self.text_input.text
+					@editor.map.open @map_file
+					self.text_input = nil
+				end
 			end
 		end
 
@@ -155,6 +165,9 @@ class MapEditor
 		@window = window
 		@map = VectorMap.new window, true
 		@open_poly = nil
+		@tool = 0
+		@tool_images = []
+		switch_tools 0
 	end
 
 	def draw
@@ -186,6 +199,12 @@ class MapEditor
 								  ZOrder::Lines + 1)
 			end
 		end
+
+		# Draw the Item preview cursor when in Item editing mode
+		if @window.mode == Mode::Items
+			@tool_images[@tool].draw_rot(@window.mouse_x, @window.mouse_y, ZOrder::UI,
+										 0, 0.5, 0.5, 1, 1, 0xccffffff)
+		end
 	end
 
 	def add_vertex(x, y)
@@ -197,7 +216,24 @@ class MapEditor
 	end
 
 	def add_item(x, y)
-		@map.items.add CollectibleGem.new(@window, CP::Vec2.new(x,y))
+		@map.items.add @map.items.available_items[@tool].camelize, [x,y]
+	end
+
+	def switch_tools(id=nil)
+		if id
+			@tool = id
+		else
+			if @tool < @map.items.available_items.size - 1
+				@tool += 1
+			else
+				@tool = 0
+			end
+		end
+
+		unless @tool_images[@tool]
+			image_file = "items/#{@map.items.available_items[@tool]}/image.png"
+			@tool_images[@tool] = Gosu::Image.new(@window, image_file, false)
+		end
 	end
 
 	def undo_item

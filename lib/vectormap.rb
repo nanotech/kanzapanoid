@@ -1,7 +1,7 @@
 require 'yaml'
 
 class VectorMap
-	attr_accessor :layers, :polys, :poly, :line, :items
+	attr_accessor :layers, :polys, :poly, :line, :items, :window
 
 	def initialize(window, editorMode = false)
 		@window = window
@@ -12,14 +12,6 @@ class VectorMap
 		@line = []
 		@items = Items.new self
 		@zincrement = 1
-
-		YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', 'item') do |type, val|
-			Item.new(@window, val['image'], val['shape'], CP::Vec2.new(val['x'], val['y']))
-		end
-
-		YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', 'item-CollectibleGem') do |type, val|
-			create(:CollectibleGem, @window, CP::Vec2.new(val['x'], val['y']))
-		end
 	end
 
 	def draw(editor=nil)
@@ -56,7 +48,10 @@ class VectorMap
 		# If we're in editor mode, get rid of the old map.
 		# This will also need to be implemented for the
 		# game for level switching.
-		@polys.clear if @editorMode == true 
+		if @editorMode == true 
+			@polys.clear 
+			@items = nil
+		end
 		# Get rid of old layers
 		@layers.clear
 
@@ -82,7 +77,8 @@ class VectorMap
 			end
 
 			@polys = data[0]
-			@items = data[1]
+			@items = Items.new self
+			@items.items = data[1]
 
 			if @editorMode == false
 				@polys.each do |poly|
@@ -150,7 +146,7 @@ class VectorMap
 		if !File.directory? @mapFolder then Dir.mkdir @mapFolder end
 
 		yaml = @polys.to_yaml
-		yaml << @items.to_yaml
+		yaml << @items.items.to_yaml
 
 		# Write to disk
 		File.open(@vectorFile, 'w') { |f| f.write(yaml) }
