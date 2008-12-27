@@ -1,4 +1,4 @@
-require 'fader'
+require 'easing'
 
 class AudioFile
 	attr_reader :sample, :loop, :intro, :begun
@@ -15,9 +15,9 @@ class AudioFile
 		@loop = loop
 		@begun = false
 		@instance = false
-		@volume = Fader.new(1.0)
-		@pan = Fader.new(0.0)
-		@speed = Fader.new(1.0)
+		@volume = Easer.new(1.0)
+		@pan = Easer.new(0.0)
+		@speed = Easer.new(1.0)
 
 		if loop 
 			# Look for an intro file for looped audio...
@@ -30,7 +30,7 @@ class AudioFile
 
 		@last_milli = milliseconds
 
-		@fade_default = 100
+		@fade_default = 1500
 	end
 
 	def play

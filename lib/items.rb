@@ -1,19 +1,58 @@
-class CollectibleGem
-	attr_reader :shape
+require 'item'
 
-	def initialize(image, shape, vect)
-		@image = image
+class Items
+	attr_accessor :items, :available_items
 
-		@shape = shape
-		@shape.body.p = vect
-		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
-		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
+	def initialize(map)
+		# Look for items
+		@available_items = scan
+
+		@window = map.window
+		@items = []
+
+		register_yaml_types
 	end
 
-	def draw(screen_x, screen_y)
-		# Draw, slowly rotating
-		@image.draw_rot(@shape.body.p.x - screen_x, @shape.body.p.y - screen_y, 0,
-						15 * Math.sin(milliseconds / 300.0))
+	def draw
+		@items.each do |item|
+			item.draw
+		end
+	end
+
+	def scan(directory='items')
+		items = []
+		Dir.foreach directory do |f|
+			if f !~ /^\./ # Don't add if the filename starts with a dot
+				items << f
+			end
+		end
+
+		items
+	end
+
+	def get(item)
+		require "items/#{item.underscore}/controller.rb"
+	end
+
+	def create(item, *args)
+		item = item.to_s
+		get item
+		item.constantize.new(@window, *args)
+	end
+
+	def add(item, *args)
+		@items.push create(item, *args)
+	end
+
+	def register_yaml_types
+		@available_items.each do |item|
+			item = item.camelize
+			get item
+
+			YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', 'item-'+item) do |type, values|
+				self.create item, item.constantize.from_yaml_with(values)
+			end
+		end
 	end
 end
 
