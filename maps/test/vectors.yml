@@ -29,8 +29,7 @@
   - 649.718078613281 131.807922363281
   - 684.5224609375 99.4895629882812
   - 684.5224609375 87.0594482421875
---- !ruby/object:Items 
-items: 
+--- 
 - !kanzapanoid.nanotechcorp.net,2008-12-08/item-CollectibleGem 
   x: 346.0
   y: 171.0
