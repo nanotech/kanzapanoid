@@ -18,7 +18,7 @@ end
 $LOAD_PATH.push '../lib/'
 
 require 'helpers'
-require 'fader'
+require 'easing'
 
 class EasingTest < Window
 	def initialize
