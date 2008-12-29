@@ -49,7 +49,7 @@ class Game < Window
 		# Create our Space and set its damping and gravity
 		@space = CP::Space.new
 		@space.damping = 0.8
-		@space.gravity = CP::Vec2.new(0.0, 500.0)
+		@space.gravity = CP::Vec2.new(0.0, 600.0)
 
 		@player = Player.new self, CP::Vec2.new(300.0, 200.0)
 
@@ -78,7 +78,7 @@ class Game < Window
 			# This means that the force you applied last SUBSTEP will compound with the
 			# force applied this SUBSTEP; which is probably not the behavior you want
 			# We reset the forces on the Player each SUBSTEP for this reason
-			@player.shape.body.reset_forces
+			#@player.shape.body.reset_forces
 
 			# Check keyboard
 			if button_down? Gosu::KbLeft then @player.walk_left end

@@ -64,15 +64,17 @@ class Character
 
 	def warp(vect); @shape.body.p = vect end
 
-	def walk_left; self.walk 'left' end
-	def walk_right; self.walk 'right' end
+	def walk_left; self.walk :left end
+	def walk_right; self.walk :right end
 
-	def walk (direction)
+	def walk(direction)
+		@walking = direction
+
 		# Multiplying by -1 inverts a number,
 		# thus we can use it to change direction.
 		case direction
-			when 'left' then direction = -1
-			when 'right' then direction = 1
+			when :left then direction = -1
+			when :right then direction = 1
 		end
 
 		@shape.body.apply_impulse(CP::Vec2.new(5 * direction, 0) * (10.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
@@ -86,19 +88,24 @@ class Character
 		end
 	end
 
-	def spin_left; @shape.body.t -= 10000.0/SUBSTEPS end
-	def spin_right; @shape.body.t += 10000.0/SUBSTEPS end
+	def spin_left
+		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0/SUBSTEPS), CP::Vec2.new(250.0, 250.0))
+	end
+	def spin_right
+		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0/SUBSTEPS), CP::Vec2.new(-250.0, -250.0))
+	end
 
 	def jump
-		#@shape.body.apply_force((@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
 		@shape.body.apply_impulse(CP::Vec2.new(0, -15) * (20.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
 	end
 
 	def duck
-		#@shape.body.apply_force(-(@shape.body.a.radians_to_vec2 * (3000.0/SUBSTEPS)), CP::Vec2.new(0.0, 0.0))
-		@shape.body.apply_force(CP::Vec2.new(0, 15) * (300.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_impulse(CP::Vec2.new(0, 15) * (20.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
 	end
 
-	def stop; @shape.surface_v = CP::Vec2.new(0,0) end
+	def stop
+		@walking = false
+		@shape.surface_v = CP::Vec2.new(0,0)
+	end
 end
 
