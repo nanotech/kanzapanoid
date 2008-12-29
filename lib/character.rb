@@ -4,7 +4,7 @@ require 'animation'
 class Character
 	attr_reader :shape, :body_parts, :window
 
-	include Animator
+	include AnimatorAPI
 
 	def initialize(window, position=Screen::Center)
 		@window = window
@@ -41,19 +41,17 @@ class Character
 
 		@body_parts = {}
 		@walking = :left
-		@animation = Animation.new
+		@animation = Animator.new
 	end
 
 	def draw
-		motion = (@walking) ? :walking : :standing
-
 		@body_parts.each do |part_name, part|
-			part.draw animate(part_name)
+			part.draw @animation.render(part_name)
 		end
 	end
 
 	def update
-		@animation.update
+		@animation.update #if @update_animation == true
 	end
 
 	def load_parts(parts)
@@ -77,6 +75,7 @@ class Character
 
 	def walk(direction)
 		@walking = direction
+		@update_animation = true
 
 		# Multiplying by -1 inverts a number,
 		# thus we can use it to change direction.
@@ -113,6 +112,7 @@ class Character
 
 	def stop
 		@walking = false
+		@update_animation = false
 		@shape.surface_v = CP::Vec2.new(0,0)
 	end
 end

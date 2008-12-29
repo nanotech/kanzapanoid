@@ -141,24 +141,26 @@ end
 class Easer
 	attr_accessor :value, :change, :time, :duration, :direction, :method
 
-	def initialize(value=0.0, direction=:none, method=:linear)
+	def initialize(value=0.0, direction=:none, method=:linear, manual_time=false)
 		@value = value.to_f
 		@direction = direction
 		@method = method
+		@manual_time = manual_time
 		self.to(value, 0)
 	end
 
-	def to(target, duration)
+	def to(target, duration=@duration)
 		@change = target.to_f - @value
 		@beginning = @value
 		@duration = duration.to_f
-		@start = milliseconds
+		@start = (@manual_time) ? 0 : milliseconds
 		@time = 0
 	end
 
-	def update
+	def update(time_change=0)
 		if @time < @duration
-			@time = milliseconds - @start
+			@time = milliseconds - @start unless @manual_time
+			@time += time_change
 			@time = @duration if @time > @duration
 			@value = @beginning.ease(@direction, @method,
 									 @time, @duration, @change)

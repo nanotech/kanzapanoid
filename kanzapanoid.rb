@@ -38,6 +38,7 @@ class Game < Window
 	def initialize
 		super(Screen::Width, Screen::Height, false)
 		self.caption = "Kanzapanoid"
+		$last_time = milliseconds
 
 		# Put the score here, as it is the environment that tracks this now
 		@score = 0
@@ -100,6 +101,8 @@ class Game < Window
 
 		@audio.update
 		@player.update
+
+		$last_time = milliseconds
 	end
 
 	def draw
