@@ -1,5 +1,8 @@
 class BodyPart
-	attr_accessor :image, :x, :y, :z, :origin_x, :origin_y, :offset_x, :offset_y, :angle, :parent
+	attr_accessor :image, :x, :y, :z, :origin_x, :origin_y,
+				  :offset_x, :offset_y, :angle, :parent,
+				  :animation
+
 	attr_reader :radius
 
 	def initialize(character, xyz, origin, image, parent=nil)
@@ -23,7 +26,9 @@ class BodyPart
 		@radius = Math.hypot(@x, @y)
 	end
 
-	def draw(angle=@angle)
+	def draw(angle)
+		angle = 0 unless angle
+
 		if @parent and @parent.is_a?(Symbol)
 			@parent = @character.body_parts[@parent]
 		end

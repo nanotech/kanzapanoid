@@ -43,39 +43,73 @@ class Player < Character
 		}
 
 		load_parts parts
+
+		#animation :walking do
+			animate :defaults do
+				duration 700
+				easing :quad
+			end
+
+			animate :head do
+				range(-2..3)
+				inverse
+			end
+
+			animate :upper_right_arm, :upper_left_arm do
+				range(-50..45)
+				inverse :alternate
+			end
+
+			animate :lower_right_arm, :lower_left_arm do
+				range(-50..-16)
+				inverse :alternate
+			end
+
+			animate :upper_right_leg, :upper_left_leg do
+				range(-30..30)
+				inverse
+			end
+		#end
 	end
 
-	def animate(part)
-		case part
+=begin
+	def animate(part, motion)
+		#case motion
 
-		when :upper_right_arm
-			angle = 55 * Math.sin(milliseconds / 300.0)
-		when :upper_left_arm
-			angle = 55 * -Math.sin(milliseconds / 300.0)
+		#when :walking
+			case part
 
-		when :lower_right_arm
-			angle = 20 * Math.sin(milliseconds / 300.0) - 40
-		when :lower_left_arm
-			angle = 20 * -Math.sin(milliseconds / 300.0) - 40
+			when :upper_right_arm
+				angle = 55 * Math.sin(milliseconds / 300.0)
+			when :upper_left_arm
+				angle = 55 * -Math.sin(milliseconds / 300.0)
 
-		when :upper_right_leg
-			angle = 15 * Math.sin(milliseconds / 300.0) - 5
-		when :upper_left_leg
-			angle = 15 * -Math.sin(milliseconds / 300.0) - 5
+			when :lower_right_arm
+				angle = 20 * Math.sin(milliseconds / 300.0) - 40
+			when :lower_left_arm
+				angle = 20 * -Math.sin(milliseconds / 300.0) - 40
 
-		when :lower_right_leg
-			angle = 15 * Math.sin(milliseconds / 300.0) + 5
-		when :lower_left_leg
-			angle = 15 * -Math.sin(milliseconds / 300.0) + 5
+			when :upper_right_leg
+				angle = 15 * Math.sin(milliseconds / 300.0) - 5
+			when :upper_left_leg
+				angle = 15 * -Math.sin(milliseconds / 300.0) - 5
 
-		when :head
-			angle = 5 * Math.sin(milliseconds / 300.0)
+			when :lower_right_leg
+				angle = 15 * Math.sin(milliseconds / 300.0) + 5
+			when :lower_left_leg
+				angle = 15 * -Math.sin(milliseconds / 300.0) + 5
 
-		else
-			angle = 0
-		end
+			when :head
+				#angle = 5 * Math.sin(milliseconds / 300.0)
+				angle = -5..5
+
+			else
+				angle = 0
+			end
+		#end
 
 		angle
 	end
+=end
 end
 

@@ -99,6 +99,7 @@ class Game < Window
 		end
 
 		@audio.update
+		@player.update
 	end
 
 	def draw

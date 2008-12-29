@@ -6,7 +6,10 @@ class Numeric
 	# [1] http://www.robertpenner.com/easing/
 	# [2] http://www.opensource.org/licenses/bsd-license.php
 	def ease(direction, method, t, d, c)
-		b = self
+		b = self.to_f
+		t = t.to_f
+		d = d.to_f
+		c = c.to_f
 
 		case method
 		when :quad
@@ -125,8 +128,8 @@ class Numeric
 					return c*(7.5625*(t-=(2.625/2.75))*t + 0.984375) + b
 				end
 			when :in_out
-				return 0.ease(t*2, 0, d, c) * 0.5 + b if t < d/2
-				0.ease(t*2-d, 0, d, c) * 0.5 + c*0.5 + b
+				return 0.ease(:in, :bounce, t*2, d, c) * 0.5 + b if t < d/2
+				0.ease(:out, :bounce, t*2-d, d, c) * 0.5 + c*0.5 + b
 			end
 		else
 			# Default to linear easing

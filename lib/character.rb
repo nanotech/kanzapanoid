@@ -1,52 +1,60 @@
 require 'body_part'
+require 'animation'
 
 class Character
 	attr_reader :shape, :body_parts, :window
 
+	include Animator
+
 	def initialize(window, position=Screen::Center)
 		@window = window
-
-		# Create the Body for the Player
-		body = CP::Body.new(10.0, 1500.0)
 
 		# In order to create a shape, we must first define it
 		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
 		# We'll use s simple, 4 sided Poly for our Player
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_height = 20.0
-		shape_width = 60.0
 		shape_array = [
 			CP::Vec2.new(-14, -18), # bottom left
 			CP::Vec2.new(-14, 22), # bottom right
 			CP::Vec2.new(170, 23), # top right
 			CP::Vec2.new(170, -23) # top left
 		]
+
+		inertia = CP.moment_for_poly(10.0, shape_array, CP::Vec2.new(0,0))
+
+		# Create the Body for the Player
+		body = CP::Body.new(10.0, inertia)
 		@shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
 
 		# Set up physical properties
 		@shape.body.p = position
-		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
 		@shape.u = 1.0 # friction
-
-		# Add the Player to Space
-		body.add_to_space(@window.space)
-		@shape.add_to_space(@window.space)
 
 		# Keep in mind that down the screen is positive y, which means that PI/2 radians,
 		# which you might consider the top in the traditional Trig unit circle sense is actually
 		# the bottom; thus 3PI/2 is the top
 		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
 
+		# Add the Player to Space
+		body.add_to_space(@window.space)
+		@shape.add_to_space(@window.space)
+
 		@body_parts = {}
+		@walking = :left
+		@animation = Animation.new
 	end
 
 	def draw
+		motion = (@walking) ? :walking : :standing
+
 		@body_parts.each do |part_name, part|
 			part.draw animate(part_name)
 		end
 	end
 
-	def animate(part=false); 0; end
+	def update
+		@animation.update
+	end
 
 	def load_parts(parts)
 		parts.each do |name, data|
