@@ -6,7 +6,7 @@ class Character
 
 	include AnimatorAPI
 
-	def initialize(window, position=Screen::Center)
+	def initialize(window, position=window.center)
 		@window = window
 
 		# In order to create a shape, we must first define it
@@ -84,7 +84,7 @@ class Character
 			when :right then direction = 1
 		end
 
-		@shape.body.apply_impulse(CP::Vec2.new(5 * direction, 0) * (10.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_impulse(CP::Vec2.new(5 * direction, 0) * (10.0), CP::Vec2.new(0.0, 0.0))
 
 		if @shape.surface_v.x * direction < 5000.0
 			if (@shape.surface_v.x * direction) >= 0 # changing directions?
@@ -96,18 +96,18 @@ class Character
 	end
 
 	def spin_left
-		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0/SUBSTEPS), CP::Vec2.new(250.0, 250.0))
+		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0), CP::Vec2.new(250.0, 250.0))
 	end
 	def spin_right
-		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0/SUBSTEPS), CP::Vec2.new(-250.0, -250.0))
+		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0), CP::Vec2.new(-250.0, -250.0))
 	end
 
 	def jump
-		@shape.body.apply_impulse(CP::Vec2.new(0, -15) * (20.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_impulse(CP::Vec2.new(0, -15) * (20.0), CP::Vec2.new(0.0, 0.0))
 	end
 
 	def duck
-		@shape.body.apply_impulse(CP::Vec2.new(0, 15) * (20.0/SUBSTEPS), CP::Vec2.new(0.0, 0.0))
+		@shape.body.apply_impulse(CP::Vec2.new(0, 15) * (20.0), CP::Vec2.new(0.0, 0.0))
 	end
 
 	def stop

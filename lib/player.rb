@@ -1,7 +1,7 @@
 require 'character'
 
 class Player < Character
-	def initialize(window, position=Screen::Center)
+	def initialize(window, position=window.center)
 		super(window, position)
 
 		# The collision_type of a shape allows us to set up special collision behavior

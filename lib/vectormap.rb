@@ -1,4 +1,5 @@
 require 'yaml'
+require 'items'
 
 class VectorMap
 	attr_accessor :layers, :polys, :poly, :line, :items, :window

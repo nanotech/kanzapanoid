@@ -1,62 +1,44 @@
-#!/usr/bin/ruby
-begin
-	# In case you use Gosu via rubygems.
-	require 'rubygems'
-rescue LoadError
-	# In case you don't.
-end
+#!/usr/bin/env ruby
 
-require 'gosu'
-include Gosu
-
-require 'chipmunk'
-
-module Screen
-	Width = 640
-	Height = 480
-	Center = CP::Vec2.new(self::Width / 2, self::Height / 2)
-end
-
-SUBSTEPS = 1
+#
+# Kanzapanoid Game entry point
+#
 
 $LOAD_PATH.push 'lib/'
 
+require 'screen'
 require 'audio'
+
+require 'chipmunk'
+include CP
+
 require 'vectormap'
 require 'player'
-require 'items'
-require 'helpers'
 
 # Layering of sprites
 module ZOrder
 	Background, Tiles, Items, Player, UI = *0..5
 end
 
-class Game < Window
-	attr_reader :map, :space, :camera_x, :camera_y
+class Game < Screen
+	attr_reader :map, :space
 
 	def initialize
-		super(Screen::Width, Screen::Height, false)
-		self.caption = "Kanzapanoid"
-		$last_time = milliseconds
+		super('Kanzapanoid', 1280, Rational(16,10))
 
 		# Put the score here, as it is the environment that tracks this now
 		@score = 0
-		@font = Gosu::Font.new(self, Gosu::default_font_name, 20)
+		@font = Font.new(self, Gosu::default_font_name, 20)
 
 		# Time increment over which to apply a physics "step" ("delta t")
 		@dt = (1.0/60.0)
 
 		# Create our Space and set its damping and gravity
-		@space = CP::Space.new
+		@space = Space.new
 		@space.damping = 0.8
-		@space.gravity = CP::Vec2.new(0.0, 600.0)
+		@space.gravity = Vec2.new(0.0, 600.0)
 
-		@player = Player.new self, CP::Vec2.new(300.0, 200.0)
-
-		# Scrolling is stored as the position of the top left corner of the screen.
-		@screen_x = @screen_y = 0
-		@camera_x = @camera_y = 0
+		@player = Player.new self, Vec2.new(300.0, 200.0)
 
 		@map = VectorMap.new self
 		@map.open 'test'
@@ -66,38 +48,26 @@ class Game < Window
 	end
 
 	def update
-		# Step the physics environment SUBSTEPS times each update
-		SUBSTEPS.times do
+		# Scrolling follows player
+		@camera.x = @player.shape.body.p.x - (@width / 2)
+		@camera.y = @player.shape.body.p.y - (@height / 2)
 
-			# Scrolling follows player
-			@camera_x = @player.shape.body.p.x - (Screen::Width / 2)
-			@camera_y = @player.shape.body.p.y - (Screen::Height / 2)
-
-			#if @camera_x < 0 then @camera_x = 0 end
-
-			# When a force or torque is set on a Body, it is cumulative
-			# This means that the force you applied last SUBSTEP will compound with the
-			# force applied this SUBSTEP; which is probably not the behavior you want
-			# We reset the forces on the Player each SUBSTEP for this reason
-			#@player.shape.body.reset_forces
-
-			# Check keyboard
-			if button_down? Gosu::KbLeft then @player.walk_left end
-			if button_down? Gosu::KbRight then @player.walk_right end
-			if !button_down? Gosu::KbLeft and !button_down? Gosu::KbRight
-				@player.stop
-			end
-
-			if button_down? self.char_to_button_id('a') then @player.spin_left end
-			if button_down? self.char_to_button_id('d') then @player.spin_right end
-
-			if button_down? Gosu::KbUp then @player.jump end
-			if button_down? Gosu::KbDown then @player.duck end
-
-			# Perform the step over @dt period of time
-			# For best performance @dt should remain consistent for the game
-			@space.step(@dt)
+		# Check keyboard
+		if button_down? KbLeft then @player.walk_left end
+		if button_down? KbRight then @player.walk_right end
+		if !button_down? KbLeft and !button_down? KbRight
+			@player.stop
 		end
+
+		if button_down? self.char_to_button_id('a') then @player.spin_left end
+		if button_down? self.char_to_button_id('d') then @player.spin_right end
+
+		if button_down? KbUp then @player.jump end
+		if button_down? KbDown then @player.duck end
+
+		# Perform the step over @dt period of time
+		# For best performance @dt should remain consistent for the game
+		@space.step(@dt)
 
 		@audio.update
 		@player.update
@@ -111,14 +81,15 @@ class Game < Window
 	end
 
 	def button_down(id)
-		if id == Button::KbEscape then close end
-		if id == Button::KbSpace then @audio.play @beep; @audio.samples[0].reset end
-		if id == Button::KbLeftShift then @audio.samples[0].left end
-		if id == Button::KbRightShift then @audio.samples[0].right end
-		if id == Button::Kb1 then @audio.samples[0].fade_out end
-		if id == Button::Kb2 then @audio.samples[0].fade_in end
-		if id == Button::Kb3 then @audio.samples[0].speed_to(0) end
-		if id == Button::Kb4 then @audio.samples[0].speed_to(2) end
+		super
+
+		if id == KbSpace then @audio.play @beep; @audio.samples[0].reset end
+		if id == KbLeftShift then @audio.samples[0].left end
+		if id == KbRightShift then @audio.samples[0].right end
+		if id == Kb1 then @audio.samples[0].fade_out end
+		if id == Kb2 then @audio.samples[0].fade_in end
+		if id == Kb3 then @audio.samples[0].speed_to(0) end
+		if id == Kb4 then @audio.samples[0].speed_to(2) end
 	end
 end
 

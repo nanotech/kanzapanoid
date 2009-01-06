@@ -1,24 +1,19 @@
-#!/usr/bin/ruby
-begin
-	# In case you use Gosu via rubygems.
-	require 'rubygems'
-rescue LoadError
-	# In case you don't.
-end
+#!/usr/bin/env ruby
 
-require 'gosu'
-include Gosu
-
-module Screen
-	Width = 640
-	Height = 480
-end
+#
+# Map Editor entry point
+#
 
 $LOAD_PATH.push 'lib/'
-require 'helpers'
-require 'vectormap'
-require 'items'
+
+require 'screen'
+require 'audio'
+
+require 'chipmunk'
+include CP
+
 require 'text_field'
+require 'vectormap'
 
 # Layering of sprites
 module ZOrder
@@ -31,23 +26,19 @@ module Mode
 	Items = 2
 end
 
-class Editor < Gosu::Window
+class Editor < Screen
 	attr_reader :map_file, :layers
-	attr_accessor :space, :camera_x, :camera_y, :mode
+	attr_accessor :space, :mode
 
 	MAP_EDITOR = true
 
 	def initialize
-		super(Screen::Width, Screen::Height, false)
-		self.caption = "Kanzapanoid Map Editor"
+		super('Kanzapanoid Map Editor')
 
 		# Create our Space and set its damping and gravity
-		@space = CP::Space.new
+		@space = Space.new
 		@space.damping = 0.8
-		@space.gravity = CP::Vec2.new(0.0, 0.0)
-
-		# Scrolling is stored as the position of the top left corner of the screen.
-		@camera_x, @camera_y = 0,0
+		@space.gravity = Vec2.new(0.0, 0.0)
 
 		@mode = Mode::None
 		@mouseColors = [0xff999999, 0xff00ff00, 0xff0000ff, 0xffff0000]
@@ -55,16 +46,16 @@ class Editor < Gosu::Window
 		@map_file = ''
 
 		@editor = MapEditor.new self
-		@input = TextField.new self, [10,10], Screen::Width - 20, 'Map Name?'
+		@input = TextField.new self, [10,10], @width - 20, 'Map Name?'
 	end
 
 	# Detects arrow key presses and moves the camera
 	# when a key is pressed.
 	def update
-		if button_down? Gosu::KbLeft then @camera_x -= 10 end
-		if button_down? Gosu::KbRight then @camera_x += 10 end
-		if button_down? Gosu::KbUp then @camera_y -= 10 end
-		if button_down? Gosu::KbDown then @camera_y += 10 end
+		if button_down? KbLeft then @camera.x -= 10 end
+		if button_down? KbRight then @camera.x += 10 end
+		if button_down? KbUp then @camera.y -= 10 end
+		if button_down? KbDown then @camera.y += 10 end
 	end
 
 	# Draws the mouse and calls the drawing 
@@ -84,8 +75,12 @@ class Editor < Gosu::Window
 	# uses the appropriate key mappings for that mode.
 	def button_down(id)
 
-		# Global
-		if id == Gosu::KbEscape then close end
+		#
+		# Global Key Mappings
+		#
+
+		super # Default key mappings
+
 		if id == self.char_to_button_id('s') and @mode != Mode::None
 			@editor.map.save
 		end
@@ -94,31 +89,31 @@ class Editor < Gosu::Window
 
 		# Polygons
 		when Mode::Polygons
-			if id == Gosu::MsLeft
+			if id == MsLeft
 				@editor.add_vertex(mouse_x + camera_x, mouse_y + camera_y) 
 			end
-			if id == Gosu::MsRight then @editor.undo_line end
+			if id == MsRight then @editor.undo_line end
 			if id == self.char_to_button_id('c') then @editor.close_poly end
 			if id == self.char_to_button_id('u') then @editor.undo_poly end
 
 		# Items
 		when Mode::Items
-			if id == Gosu::MsLeft
+			if id == MsLeft
 				@editor.add_item(mouse_x + camera_x, mouse_y + camera_y)
 			end
 			if id == self.char_to_button_id('u') then @editor.undo_item end
-			if id == Gosu::KbSpace then @editor.switch_tools end
+			if id == KbSpace then @editor.switch_tools end
 
 		# Map name text field
 		when Mode::None
-			if id == Gosu::KbEscape then
+			if id == KbEscape then
 				# Escape key will not be 'eaten' by text fields; use for deselecting.
 				if self.text_input then
 					self.text_input = nil
 				else
 					close
 				end
-			elsif id == Gosu::MsLeft then
+			elsif id == MsLeft then
 				# Mouse click: Select text field based on mouse position.
 				if @input.under_point?(mouse_x, mouse_y)
 					self.text_input = @input 
@@ -131,7 +126,7 @@ class Editor < Gosu::Window
 					end
 					self.text_input = nil 
 				end
-			elsif id == Gosu::KbReturn
+			elsif id == KbReturn
 				if self.text_input and @map_file != self.text_input.text
 					@map_file = self.text_input.text
 					@editor.map.open @map_file
@@ -141,7 +136,7 @@ class Editor < Gosu::Window
 		end
 
 		# Cycle though the modes
-		if id == Gosu::KbReturn
+		if id == KbReturn
 			if @mode < 2
 				@mode += 1
 			else
@@ -163,7 +158,7 @@ class MapEditor
 
 	def initialize(window)
 		@window = window
-		@map = VectorMap.new window, true
+		@map = VectorMap.new @window, true
 		@open_poly = nil
 		@tool = 0
 		@tool_images = []
@@ -232,7 +227,7 @@ class MapEditor
 
 		unless @tool_images[@tool]
 			image_file = "items/#{@map.items.available_items[@tool]}/image.png"
-			@tool_images[@tool] = Gosu::Image.new(@window, image_file, false)
+			@tool_images[@tool] = Image.new(@window, image_file, false)
 		end
 	end
 

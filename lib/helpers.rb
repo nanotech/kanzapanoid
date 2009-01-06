@@ -64,6 +64,20 @@ class Array
 			raise InvalidVector
 		end
 	end
+
+	#
+	# Vector shortcuts
+	#
+
+	# reading
+	def x; self.at(0) end
+	def y; self.at(1) end
+	def z; self.at(2) end
+
+	# writing
+	def x=(v); self[0] = v end
+	def y=(v); self[1] = v end
+	def z=(v); self[2] = v end
 end
 
 # Automatically require and create an object based on it's name
