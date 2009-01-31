@@ -14,6 +14,10 @@ class Numeric
 	def degrees_to_radians; self / (180.0 / Math::PI); end;
 
 	def distance_to(other); Math::sqrt(self**2 + other**2); end
+
+	def sign
+		self > 0 ? 1 : -1
+	end
 end
 
 class String

@@ -3,6 +3,7 @@ require 'animation'
 
 class Character
 	attr_reader :shape, :body_parts, :window
+	attr_accessor :angle_correction
 
 	include AnimatorAPI
 
@@ -14,10 +15,10 @@ class Character
 		# We'll use s simple, 4 sided Poly for our Player
 		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
 		shape_array = [
-			CP::Vec2.new(-14, -18), # bottom left
-			CP::Vec2.new(-14, 22), # bottom right
-			CP::Vec2.new(170, 23), # top right
-			CP::Vec2.new(170, -23) # top left
+			CP::Vec2.new(-22, -18), # bottom left
+			CP::Vec2.new(-22, 22), # bottom right
+			CP::Vec2.new(160, 23), # top right
+			CP::Vec2.new(160, -23) # top left
 		]
 
 		inertia = CP.moment_for_poly(10.0, shape_array, CP::Vec2.new(0,0))
@@ -33,7 +34,7 @@ class Character
 		# Keep in mind that down the screen is positive y, which means that PI/2 radians,
 		# which you might consider the top in the traditional Trig unit circle sense is actually
 		# the bottom; thus 3PI/2 is the top
-		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
+		@shape.body.a = -(Math::PI/2) # angle in radians; faces towards top of screen
 
 		# Add the Player to Space
 		body.add_to_space(@window.space)
@@ -42,6 +43,9 @@ class Character
 		@body_parts = {}
 		@walking = :left
 		@animation = Animator.new
+
+		@angle_correction = false
+		@back_from = 0
 	end
 
 	def draw
@@ -51,7 +55,23 @@ class Character
 	end
 
 	def update
+		keep_up
 		@animation.update #if @update_animation == true
+	end
+
+	def keep_up
+		if @angle_correction
+			radian_angle = @shape.body.a + (Math::PI / 2)
+
+			if Math::sin(@shape.body.a) > -0.985
+				if @back_from != radian_angle.sign
+					return_vector = CP::Vec2.new(@back_from * -1, 0) * 200.0 * @shape.body.w.abs
+					@shape.body.apply_impulse(return_vector, CP::Vec2.new(250.0, 250.0))
+					@back_from = radian_angle.sign
+				end
+				@shape.body.apply_impulse(CP::Vec2.new(radian_angle, 0) * (15.0), CP::Vec2.new(250.0, 250.0))
+			end
+		end
 	end
 
 	def load_parts(parts)
