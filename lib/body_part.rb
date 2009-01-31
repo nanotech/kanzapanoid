@@ -35,7 +35,7 @@ class BodyPart
 
 		@angle = angle
 
-		theta = Math.atan2(@x, @y) + @character.shape.body.a
+		theta = Math.atan2(@x, @y) + @character.body.a
 		theta += @parent.angle.degrees_to_radians - 90 if @parent
 
 		@offset_x = @radius * Math::cos(theta)
@@ -48,10 +48,10 @@ class BodyPart
 		end
 
 		@image.draw_rot(
-			@character.shape.body.p.x - @window.camera_x + @offset_x,
-			@character.shape.body.p.y - @window.camera_y + @offset_y,
+			@character.body.p.x - @window.camera_x + @offset_x,
+			@character.body.p.y - @window.camera_y + @offset_y,
 			@z,
-			@character.shape.body.a.radians_to_gosu + @angle,
+			@character.body.a.radians_to_gosu + @angle,
 			@origin_x, @origin_y
 		)
 	end

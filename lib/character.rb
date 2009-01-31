@@ -2,43 +2,17 @@ require 'body_part'
 require 'animation'
 
 class Character
-	attr_reader :shape, :body_parts, :window
+	attr_reader :body, :body_parts, :window
 	attr_accessor :angle_correction
 
 	include AnimatorAPI
 
-	def initialize(window, position=window.center)
+	def initialize(window, body, position=window.center)
 		@window = window
 
-		# In order to create a shape, we must first define it
-		# Chipmunk defines 3 types of Shapes: Segments, Circles and Polys
-		# We'll use s simple, 4 sided Poly for our Player
-		# You need to define the vectors so that the "top" of the Shape is towards 0 radians (the right)
-		shape_array = [
-			CP::Vec2.new(-22, -18), # bottom left
-			CP::Vec2.new(-22, 22), # bottom right
-			CP::Vec2.new(160, 23), # top right
-			CP::Vec2.new(160, -23) # top left
-		]
-
-		inertia = CP.moment_for_poly(10.0, shape_array, CP::Vec2.new(0,0))
-
-		# Create the Body for the Player
-		body = CP::Body.new(10.0, inertia)
-		@shape = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
-
-		# Set up physical properties
-		@shape.body.p = position
-		@shape.u = 1.0 # friction
-
-		# Keep in mind that down the screen is positive y, which means that PI/2 radians,
-		# which you might consider the top in the traditional Trig unit circle sense is actually
-		# the bottom; thus 3PI/2 is the top
-		@shape.body.a = -(Math::PI/2) # angle in radians; faces towards top of screen
-
-		# Add the Player to Space
-		body.add_to_space(@window.space)
-		@shape.add_to_space(@window.space)
+		# Add the body to the space
+		@body = body
+		@body.add_to_space @window.space
 
 		@body_parts = {}
 		@walking = :left
@@ -61,15 +35,15 @@ class Character
 
 	def keep_up
 		if @angle_correction
-			radian_angle = @shape.body.a + (Math::PI / 2)
+			radian_angle = @body.a + (Math::PI / 2)
 
-			if Math::sin(@shape.body.a) > -0.985
+			if Math::sin(@body.a) > -0.985
 				if @back_from != radian_angle.sign
-					return_vector = CP::Vec2.new(@back_from * -1, 0) * 200.0 * @shape.body.w.abs
-					@shape.body.apply_impulse(return_vector, CP::Vec2.new(250.0, 250.0))
+					return_vector = CP::Vec2.new(@back_from * -1, 0) * 200.0 * @body.w.abs
+					@body.apply_impulse(return_vector, CP::Vec2.new(250.0, 250.0))
 					@back_from = radian_angle.sign
 				end
-				@shape.body.apply_impulse(CP::Vec2.new(radian_angle, 0) * (15.0), CP::Vec2.new(250.0, 250.0))
+				@body.apply_impulse(CP::Vec2.new(radian_angle, 0) * (15.0), CP::Vec2.new(250.0, 250.0))
 			end
 		end
 	end
@@ -88,7 +62,7 @@ class Character
 		end
 	end
 
-	def warp(vect); @shape.body.p = vect end
+	def warp(vect); @body.p = vect end
 
 	def walk_left; self.walk :left end
 	def walk_right; self.walk :right end
@@ -104,36 +78,36 @@ class Character
 			when :right then direction = 1
 		end
 
-		@shape.body.apply_impulse(CP::Vec2.new(5 * direction, 0) * (10.0), CP::Vec2.new(0.0, 0.0))
+		@body.apply_impulse(CP::Vec2.new(5 * direction, 0) * (10.0), CP::Vec2.new(0.0, 0.0))
 
-		if @shape.surface_v.x * direction < 5000.0
-			if (@shape.surface_v.x * direction) >= 0 # changing directions?
-				@shape.surface_v.x -= 200.0 * direction
+		if @torso.surface_v.x * direction < 5000.0
+			if (@torso.surface_v.x * direction) >= 0 # changing directions?
+				@torso.surface_v.x -= 200.0 * direction
 			else
-				@shape.surface_v.x -= 100.0 * direction
+				@torso.surface_v.x -= 100.0 * direction
 			end
 		end
 	end
 
 	def spin_left
-		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0), CP::Vec2.new(250.0, 250.0))
+		@body.apply_impulse(CP::Vec2.new(1, 0) * (20.0), CP::Vec2.new(250.0, 250.0))
 	end
 	def spin_right
-		@shape.body.apply_impulse(CP::Vec2.new(1, 0) * (20.0), CP::Vec2.new(-250.0, -250.0))
+		@body.apply_impulse(CP::Vec2.new(1, 0) * (20.0), CP::Vec2.new(-250.0, -250.0))
 	end
 
 	def jump
-		@shape.body.apply_impulse(CP::Vec2.new(0, -15) * (20.0), CP::Vec2.new(0.0, 0.0))
+		@body.apply_impulse(CP::Vec2.new(0, -15) * (20.0), CP::Vec2.new(0.0, 0.0))
 	end
 
 	def duck
-		@shape.body.apply_impulse(CP::Vec2.new(0, 15) * (20.0), CP::Vec2.new(0.0, 0.0))
+		@body.apply_impulse(CP::Vec2.new(0, 15) * (20.0), CP::Vec2.new(0.0, 0.0))
 	end
 
 	def stop
 		@walking = false
 		@update_animation = false
-		@shape.surface_v = CP::Vec2.new(0,0)
+		@torso.surface_v = CP::Vec2.new(0,0)
 	end
 end
 

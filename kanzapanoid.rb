@@ -49,8 +49,8 @@ class Game < Screen
 
 	def update
 		# Scrolling follows player
-		@camera.x = @player.shape.body.p.x - (@width / 2)
-		@camera.y = @player.shape.body.p.y - (@height / 2)
+		@camera.x = @player.body.p.x - (@width / 2)
+		@camera.y = @player.body.p.y - (@height / 2)
 
 		# Check keyboard
 		if button_down? KbLeft then @player.walk_left end

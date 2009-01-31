@@ -2,12 +2,33 @@ require 'character'
 
 class Player < Character
 	def initialize(window, position=window.center)
-		super(window, position)
+		shape_array = [
+			CP::Vec2.new(-22, -18), # bottom left
+			CP::Vec2.new(-22, 22), # bottom right
+			CP::Vec2.new(160, 23), # top right
+			CP::Vec2.new(160, -23) # top left
+		]
+
+		inertia = CP.moment_for_poly(10.0, shape_array, CP::Vec2.new(0,0))
+
+		# Create the Body for the Player
+		body = CP::Body.new(10.0, inertia)
+		@torso = CP::Shape::Poly.new(body, shape_array, CP::Vec2.new(0,0))
+
+		# Set up physical properties
+		@torso.body.p = position
+		@torso.u = 1.0 # friction
+
+		@torso.body.a = -(Math::PI/2) # angle in radians; faces towards top of screen
+
+		super(window, body, position)
+
+		@torso.add_to_space(@window.space)
 
 		# The collision_type of a shape allows us to set up special collision behavior
 		# based on these types. The actual value for the collision_type is arbitrary
 		# and, as long as it is consistent, will work for us; of course, it helps to have it make sense
-		@shape.collision_type = :player
+		@torso.collision_type = :player
 
 		# Enable angle correction
 		@angle_correction = true
