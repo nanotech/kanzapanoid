@@ -92,29 +92,38 @@ class Player < Character
 
 			animate :lower_right_leg, :lower_left_leg do
 				range(0..40)
-				inverse :alternate
+				inverse# :alternate
 			end
 		end
 
 		animation :standing do
 			animate :upper_right_arm, :upper_left_arm do
-				range(-10..15)
+				range(-20..-18)
 			end
 
 			animate :lower_right_arm, :lower_left_arm do
-				range(-50..-16)
-			end
-
-			animate :upper_right_leg, :upper_left_leg do
-				range(-5..5)
+				range(-60..-50)
 				inverse
 			end
 
+			animate :upper_right_leg, :upper_left_leg do
+				range(0..0)
+			end
+
 			animate :lower_right_leg, :lower_left_leg do
-				range(0..5)
+				range(0..0)
 			end
 		end
 
-		@animation.group = :walking
+		@animator.group = :standing
+	end
+
+	def update
+		if @body.vel.x > 5 or @body.vel.x < -5
+			@animator.group = :walking
+		else
+			@animator.group = :standing
+		end
+		super
 	end
 end

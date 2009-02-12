@@ -3,7 +3,7 @@ require 'animation'
 
 class Character
 	attr_reader :body, :body_parts, :window
-	attr_accessor :angle_correction
+	attr_accessor :angle_correction, :animator
 
 	include AnimatorAPI
 
@@ -16,7 +16,7 @@ class Character
 
 		@body_parts = {}
 		@walking = :left
-		@animation = Animator.new
+		@animator = Animator.new
 
 		@angle_correction = false
 		@back_from = 0
@@ -24,13 +24,13 @@ class Character
 
 	def draw
 		@body_parts.each do |part_name, part|
-			part.draw @animation.render(part_name)
+			part.draw @animator.render(part_name)
 		end
 	end
 
 	def update
 		keep_up
-		@animation.update #if @update_animation == true
+		@animator.update #if @update_animation == true
 	end
 
 	def keep_up
@@ -67,26 +67,28 @@ class Character
 	def walk_left; self.walk :left end
 	def walk_right; self.walk :right end
 
-	def walk(direction)
-		@walking = direction
+	def walk(direction_sym)
 		@update_animation = true
 
 		# Multiplying by -1 inverts a number,
 		# thus we can use it to change direction.
-		case direction
+		case direction_sym
 			when :left then direction = -1
 			when :right then direction = 1
 		end
 
-		@body.apply_impulse(CP::Vec2.new(5 * direction, 0) * (10.0), CP::Vec2.new(0.0, 0.0))
+		@body.apply_impulse(CP::Vec2.new(30 * direction, 0), CP::Vec2.new(0.0, 0.0))
 
 		if @torso.surface_v.x * direction < 5000.0
-			if (@torso.surface_v.x * direction) >= 0 # changing directions?
-				@torso.surface_v.x -= 200.0 * direction
-			else
-				@torso.surface_v.x -= 100.0 * direction
+			if @walking != direction_sym # changing directions?
+				@torso.surface_v.x = 0.0
+				@body.apply_impulse(@body.v * -1, CP::Vec2.new(0.0, 0.0))
 			end
+
+			@torso.surface_v.x -= 100.0 * direction
 		end
+
+		@walking = direction_sym
 	end
 
 	def spin_left

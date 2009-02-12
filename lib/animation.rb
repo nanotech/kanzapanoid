@@ -1,3 +1,5 @@
+require 'easing'
+
 class Animator
 	attr_accessor :motions, :groups, :group, :defaults
 
@@ -15,72 +17,94 @@ class Animator
 	def update
 		@motions.each_value { |m| m.update }
 	end
+
+	def group=(name)
+		if name != @group
+			@motions.each_value { |m| m.reset }
+			@group = name
+		end
+	end
 end
 
 class Motion
-	attr_accessor :ranges, :easer, :inverse, :group
+	attr_accessor :groups, :easer, :first_run
+	attr_reader :animator
 
 	def initialize(animator)
 		@animator = animator
-		@ranges = { @animator.group => 0..0 }
-		@inverse = { :do => false }
+		@groups = { @animator.group => Group.new(self) }
 		@easer = Easer.new 0.0, :in_out, :quad, :manual
 		@easer.duration = @animator.defaults.easer.duration if @animator.defaults
+		@direction = true
+		reset
+	end
+
+	def group
+		@groups[@animator.group] ||= Group.new(self)
+	end
+
+	def range=(range)
+		group.range = [range.first.to_f, range.last.to_f]
+	end
+
+	def reset
 		@first_run = true
 	end
 
 	def update
-		group = @animator.group
+		group = @groups[@animator.group]
 
-		if @ranges[group] and (@easer.time >= @easer.duration)
+		if group and (@easer.time >= @easer.duration)
 
-			range = @ranges[group]
-
-			if @inverse[:do] and @first_run
-				if @inverse[:alternate]
-					@easer.to range.first
-				else
-					@easer.to range.last
-				end
-			else
-				if @easer.change > (range.first + range.last) / 2
-					@easer.to range.first
-				else
-					@easer.to range.last
-				end
+			if @first_run
+				@direction = group.inverse
+				@first_run = false
 			end
 
-			@first_run = false
+			if @direction
+				@easer.to group.range.first
+			else
+				@easer.to group.range.last
+			end
+
+			# Reverse direction
+			@direction = !@direction
 		end
 
 		#             v Temporary animation de-sync fix
 		@easer.update 20 #milliseconds - $last_time
 	end
+
+	def method_missing(method, *args)
+		group.send(method, *args)
+	end
+
+	class Group
+		attr_accessor :range, :inverse
+
+		def initialize(motion)
+			@animator = motion.animator
+			@motion = motion
+			@range = [0,0]
+			@inverse = false
+		end
+	end
 end
 
 module AnimatorAPI
 	def animate(*motions)
-		m = @animation.motions
+		m = @animator.motions
 
-		motions.each do |motion|
-			@animation_scope = motion
-			m[motion] = Motion.new(@animation) unless m[motion]
+		motions.each_with_index do |motion_name, id|
+			@animation_scope = motion_name
+			m[motion_name] = Motion.new(@animator) unless m[motion_name]
+			motion = m[motion_name]
 
 			yield
 
-			m[motion].easer.direction = m[motion].easer.direction || m[:defaults].easer.direction
-			m[motion].easer.method = m[motion].easer.method || m[:defaults].easer.method
-
-			if !m[motion].inverse[:every] and motions.size == 2
-				index = motions.index(motion)
-				alternate = m[motion].inverse[:alternate]
-
-				if alternate and index == 1
-					m[motion].inverse.delete(:alternate)
-				elsif !alternate and index == 0
-					m[motion].inverse[:do] = false
-				end
-			end
+			motion.easer.direction ||= m[:defaults].easer.direction
+			motion.easer.method ||= m[:defaults].easer.method
+			motion.inverse = !(motion.inverse and motions.size == 2 and id == 0)
 
 			@animation_scope = nil
 		end
@@ -88,7 +112,7 @@ module AnimatorAPI
 
 	def animation(*names)
 		names.each do |name|
-			@animation.group = name
+			@animator.group = name
 			yield
 		end
 	end
@@ -105,23 +129,18 @@ module AnimatorAPI
 	end
 
 	def range(value)
-		current_motion.ranges[@animation.group] = [value.first.to_f, value.last.to_f]
+		current_motion.range = value
 	end
 
 	def duration(value)
 		current_motion.easer.duration = value
 	end
 
-	def inverse(*opts)
-		m = current_motion
-		m.inverse[:do] = true
-		m.inverse[:alternate] = true if opts.include? :alternate
-		m.inverse[:every] = true if opts.include? :every
+	def inverse(value=true)
+		current_motion.inverse = value
 	end
 
 	def current_motion
-		m = @animation.motions[@animation_scope]
-		m = @animation.defaults unless m
-		m
+		@animator.motions[@animation_scope] || @animator.defaults
 	end
 end
