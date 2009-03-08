@@ -1,4 +1,5 @@
 require 'yaml'
+require 'items'
 
 class VectorMap
 	attr_accessor :layers, :polys, :poly, :line, :items, :window
@@ -63,7 +64,7 @@ class VectorMap
 			end
 		end
 
-		body = CP::Body.new(8**10, 8**10) if @editorMode == false
+		body = CP::Body.new(Float::INFINITY, Float::INFINITY) if @editorMode == false
 
 		if File.exists? @vectorFile
 			data = []

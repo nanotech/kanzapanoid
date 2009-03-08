@@ -6,7 +6,10 @@ class Numeric
 	# [1] http://www.robertpenner.com/easing/
 	# [2] http://www.opensource.org/licenses/bsd-license.php
 	def ease(direction, method, t, d, c)
-		b = self
+		b = self.to_f
+		t = t.to_f
+		d = d.to_f
+		c = c.to_f
 
 		case method
 		when :quad
@@ -125,8 +128,8 @@ class Numeric
 					return c*(7.5625*(t-=(2.625/2.75))*t + 0.984375) + b
 				end
 			when :in_out
-				return 0.ease(t*2, 0, d, c) * 0.5 + b if t < d/2
-				0.ease(t*2-d, 0, d, c) * 0.5 + c*0.5 + b
+				return 0.ease(:in, :bounce, t*2, d, c) * 0.5 + b if t < d/2
+				0.ease(:out, :bounce, t*2-d, d, c) * 0.5 + c*0.5 + b
 			end
 		else
 			# Default to linear easing
@@ -138,24 +141,26 @@ end
 class Easer
 	attr_accessor :value, :change, :time, :duration, :direction, :method
 
-	def initialize(value=0.0, direction=:none, method=:linear)
+	def initialize(value=0.0, direction=:none, method=:linear, manual_time=false)
 		@value = value.to_f
 		@direction = direction
 		@method = method
+		@manual_time = manual_time
 		self.to(value, 0)
 	end
 
-	def to(target, duration)
+	def to(target, duration=@duration)
 		@change = target.to_f - @value
 		@beginning = @value
 		@duration = duration.to_f
-		@start = milliseconds
+		@start = (@manual_time) ? 0 : milliseconds
 		@time = 0
 	end
 
-	def update
+	def update(time_change=0)
 		if @time < @duration
-			@time = milliseconds - @start
+			@time = milliseconds - @start unless @manual_time
+			@time += time_change
 			@time = @duration if @time > @duration
 			@value = @beginning.ease(@direction, @method,
 									 @time, @duration, @change)

@@ -2,8 +2,21 @@
 
 class Numeric
 	# Convenience method for converting from radians to a Vec2 vector.
-	def radians_to_vec2
-		CP::Vec2.new(Math::cos(self), Math::sin(self))
+	def radians_to_vec2; CP::Vec2.new(Math::cos(self), Math::sin(self)); end
+
+	# Same as above, but converts to a plain Ruby array.
+	def radians_to_cartesian; [Math::cos(self), Math::sin(self)]; end
+
+	def radians_to_gosu; self.radians_to_degrees + 90; end;
+	def gosu_to_radians; (self - 90).radians_to_degrees; end;
+
+	def radians_to_degrees; self * (180.0 / Math::PI); end;
+	def degrees_to_radians; self / (180.0 / Math::PI); end;
+
+	def distance_to(other); Math::sqrt(self**2 + other**2); end
+
+	def sign
+		self > 0 ? 1 : -1
 	end
 end
 
@@ -55,6 +68,20 @@ class Array
 			raise InvalidVector
 		end
 	end
+
+	#
+	# Vector shortcuts
+	#
+
+	# reading
+	def x; self.at(0) end
+	def y; self.at(1) end
+	def z; self.at(2) end
+
+	# writing
+	def x=(v); self[0] = v end
+	def y=(v); self[1] = v end
+	def z=(v); self[2] = v end
 end
 
 # Automatically require and create an object based on it's name
