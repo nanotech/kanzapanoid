@@ -1,7 +1,7 @@
 require 'easing'
 
 class AudioFile
-	attr_reader :sample, :loop, :intro, :begun
+	attr_reader :sample, :loop, :intro, :begun, :instance
 
 	def initialize(window, file, loop=false)
 		@window = window
@@ -38,8 +38,6 @@ class AudioFile
 		if !@begun and @intro
 			# @begun is set when the intro has been played
 			@begun = true
-
-			# [0] is the actual sample, while [1] is it's id in @samples.
 			@instance = @intro.play
 		else
 			@instance = @sample.play

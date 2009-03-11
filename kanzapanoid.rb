@@ -16,7 +16,7 @@ class Kanzapanoid < Screens
 
 	def initialize
 		super('Kanzapanoid', 1280, Rational(16,10))
-		switch_to 'game'
+		switch_to 'menu'
 	end
 end
 

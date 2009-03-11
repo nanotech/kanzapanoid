@@ -71,15 +71,22 @@ class Game < Screen
 		@player.draw
 	end
 
-	def button_down(id)
-		super
+	def enter
+		@audio.samples[0].instance.resume
+	end
 
-		if id == KbSpace then @audio.play @beep; @audio.samples[0].reset end
-		if id == KbLeftShift then @audio.samples[0].left end
-		if id == KbRightShift then @audio.samples[0].right end
-		if id == Kb1 then @audio.samples[0].fade_out end
-		if id == Kb2 then @audio.samples[0].fade_in end
-		if id == Kb3 then @audio.samples[0].speed_to(0) end
-		if id == Kb4 then @audio.samples[0].speed_to(2) end
+	def button_down(id)
+		case id
+		when KbSpace; @audio.play @beep; @audio.samples[0].reset
+		when KbLeftShift; @audio.samples[0].left
+		when KbRightShift; @audio.samples[0].right
+		when Kb1; @audio.samples[0].fade_out
+		when Kb2; @audio.samples[0].fade_in
+		when Kb3; @audio.samples[0].speed_to(0)
+		when Kb4; @audio.samples[0].speed_to(2)
+		when KbEscape
+			@audio.samples[0].instance.pause
+			switch_to :menu
+		end
 	end
 end
