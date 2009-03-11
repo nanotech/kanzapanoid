@@ -48,8 +48,8 @@ class BodyPart
 		end
 
 		@image.draw_rot(
-			@character.body.p.x - @window.camera_x + @offset_x,
-			@character.body.p.y - @window.camera_y + @offset_y,
+			@character.body.p.x - @window.camera.x + @offset_x,
+			@character.body.p.y - @window.camera.y + @offset_y,
 			@z,
 			@character.body.a.radians_to_gosu + @angle,
 			@origin_x, @origin_y

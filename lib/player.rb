@@ -23,7 +23,7 @@ class Player < Character
 
 		super(window, body, position)
 
-		@torso.add_to_space(@window.space)
+		@torso.add_to_space(@screen.space)
 
 		# The collision_type of a shape allows us to set up special collision behavior
 		# based on these types. The actual value for the collision_type is arbitrary

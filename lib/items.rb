@@ -7,7 +7,7 @@ class Items
 		# Look for items
 		@available_items = scan
 
-		@window = map.window
+		@screen = map.screen
 		@items = []
 
 		register_yaml_types
@@ -37,7 +37,7 @@ class Items
 	def create(item, *args)
 		item = item.to_s
 		get item
-		item.constantize.new(@window, *args)
+		item.constantize.new(@screen, *args)
 	end
 
 	def add(item, *args)

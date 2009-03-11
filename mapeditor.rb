@@ -27,13 +27,14 @@ module Mode
 end
 
 class Editor < Screen
-	attr_reader :map_file, :layers
+	attr_reader :map_file, :layers, :window
 	attr_accessor :space, :mode
 
 	MAP_EDITOR = true
 
 	def initialize
 		super('Kanzapanoid Map Editor')
+		@window = self
 
 		# Create our Space and set its damping and gravity
 		@space = Space.new

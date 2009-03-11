@@ -2,10 +2,10 @@ require 'yaml'
 require 'items'
 
 class VectorMap
-	attr_accessor :layers, :polys, :poly, :line, :items, :window
+	attr_accessor :layers, :polys, :poly, :line, :items, :screen
 
-	def initialize(window, editorMode = false)
-		@window = window
+	def initialize(screen, editorMode = false)
+		@screen = screen
 		@editorMode = editorMode
 		@layers = []
 		@polys = []
@@ -18,7 +18,7 @@ class VectorMap
 	def draw(editor=nil)
 		layerZ = ZOrder::Background
 		@layers.each do |layer|
-			layer.draw(-@window.camera_x, -@window.camera_y, layerZ)
+			layer.draw(-@screen.window.camera.x, -@screen.window.camera.y, layerZ)
 
 			# Increase the z-level for each layer.
 			# This should be implemented in a more flexible way
@@ -59,7 +59,7 @@ class VectorMap
 		if File.exists? @mapFolder
 			Dir.foreach(@mapFolder) do |f|
 				if f.include? FileNames::Layers
-					@layers.push Gosu::Image.new(@window, @mapFolder + f, true)
+					@layers.push Gosu::Image.new(@screen.window, @mapFolder + f, true)
 				end
 			end
 		end
@@ -90,7 +90,7 @@ class VectorMap
 
 					shape = CP::Shape::Poly.new(body, @cp_vertices, CP::Vec2.new(0,0))
 					shape.u = 0.5 # friction
-					@window.space.add_static_shape(shape)
+					@screen.space.add_static_shape(shape)
 				end
 			end
 
@@ -125,7 +125,7 @@ class VectorMap
 					if mode == ParseMode::ChipmunkPoly
 						shape = CP::Shape::Poly.new(body, vertices, CP::Vec2.new(0,0))
 						shape.u = 0.5 # friction
-						@window.space.add_static_shape(shape)
+						@screen.space.add_static_shape(shape)
 					end
 
 					mode = ParseMode::None

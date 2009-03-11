@@ -46,7 +46,7 @@ class String
 
 	# Convert a CamelCase string to a constant
 	def constantize
-		names = self.split('::')
+		names = self.camelize.split('::')
 
 		constant = Object
 		names.each do |name|

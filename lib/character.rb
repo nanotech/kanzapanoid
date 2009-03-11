@@ -7,12 +7,13 @@ class Character
 
 	include AnimatorAPI
 
-	def initialize(window, body, position=window.center)
-		@window = window
+	def initialize(screen, body, position=window.center)
+		@screen = screen
+		@window = screen.window
 
 		# Add the body to the space
 		@body = body
-		@body.add_to_space @window.space
+		@body.add_to_space @screen.space
 
 		@body_parts = {}
 		@walking = :left

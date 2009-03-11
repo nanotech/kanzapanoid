@@ -1,16 +1,16 @@
 class Item
 	attr_reader :image, :image_name, :yaml_tag, :shape
 
-	def initialize(window, position, shape, image=self.image_file,
-				   yaml_tag=self.class.name, space=window.space)
+	def initialize(screen, position, shape, image=self.image_file,
+				   yaml_tag=self.class.name, space=screen.space)
 
 		@image_name = image
 		@yaml_tag = '-' + yaml_tag
 		@space = space
 
-		@window = window
+		@window = screen.window
 
-		@image = Gosu::Image.new(window, image, false)
+		@image = Gosu::Image.new(@window, image, false)
 
 		position = position.to_vec2 unless position.is_a?(CP::Vec2)
 
@@ -23,8 +23,8 @@ class Item
 	end
 
 	def draw(angle=0,z=ZOrder::Items)
-		@image.draw_rot(@shape.body.p.x - @window.camera_x,
-						@shape.body.p.y - @window.camera_y, 
+		@image.draw_rot(@shape.body.p.x - @window.camera.x,
+						@shape.body.p.y - @window.camera.y,
 						z, angle)
 	end
 
