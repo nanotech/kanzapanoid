@@ -87,19 +87,29 @@ class Screen
 		@name = name
 		@height = window.height
 		@width = window.width
+
+		# Delegate methods we don't have to @window.
+		(@window.methods - methods).each do |m|
+			m = m.to_sym # convert the string to a symbol
+			self.class.send(:define_method, m) do |*args|
+				@window.send m, *args
+			end
+		end
 	end
 
+	# Override this!
 	def draw; end
+	# Override this!
 	def update; end
 
-	def mouse_x; @window.mouse_x end
-	def mouse_y; @window.mouse_y end
-	def button_down?(id); @window.button_down?(id) end
-
+	# Default keybindings:
+	#     Esc => Close Window
 	def button_down(id)
 		if id == KbEscape then @window.close end
 	end
 
+	# Destroy this screen's state. The screen you're destroying probably
+	# shouldn't be active when you do this.
 	def destroy!
 		@window.destroy! @name	
 	end
