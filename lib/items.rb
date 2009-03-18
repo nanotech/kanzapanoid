@@ -20,10 +20,11 @@ class Items
 	end
 
 	def scan(directory='items')
-		items = []
-		Dir.foreach directory do |f|
-			if f !~ /^\./ # Don't add if the filename starts with a dot
-				items << f
+		items = {}
+		Dir.foreach directory do |item_name|
+			if item_name !~ /^\./ # Don't add if the filename starts with a dot
+				get item_name
+				items[item_name.to_sym] = item_name.constantize
 			end
 		end
 
@@ -31,7 +32,7 @@ class Items
 	end
 
 	def get(item)
-		require "items/#{item.underscore}/controller.rb"
+		require "items/#{item}/#{item}.rb"
 	end
 
 	def create(item, *args)
@@ -45,12 +46,9 @@ class Items
 	end
 
 	def register_yaml_types
-		@available_items.each do |item|
-			item = item.camelize
-			get item
-
-			YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', 'item-'+item) do |type, values|
-				self.create item, item.constantize.from_yaml_with(values)
+		@available_items.each do |item_name, item_class|
+			YAML::add_domain_type('kanzapanoid.nanotechcorp.net,2008-12-08', "item-#{item_name.to_s.camelize}") do |type, values|
+				self.create item_name, item_class.from_yaml_with(values)
 			end
 		end
 	end

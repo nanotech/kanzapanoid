@@ -227,7 +227,8 @@ class MapEditor
 		end
 
 		unless @tool_images[@tool]
-			image_file = "items/#{@map.items.available_items[@tool]}/image.png"
+			tools = @map.items.available_items.values.sort { |x,y| x.inspect <=> y.inspect }
+			image_file = tools[@tool].image_file
 			@tool_images[@tool] = Image.new(@window, image_file, false)
 		end
 	end

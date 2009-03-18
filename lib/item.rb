@@ -1,7 +1,7 @@
 class Item
 	attr_reader :image, :image_name, :yaml_tag, :shape
 
-	def initialize(screen, position, shape, image=self.image_file,
+	def initialize(screen, position, shape, image=self.class.image_file,
 				   yaml_tag=self.class.name, space=screen.space)
 
 		@image_name = image
@@ -38,8 +38,8 @@ class Item
 		@shape.remove_from_space(@space)
 	end
 
-	def image_file
-		"items/#{self.class.name.underscore}/image.png"
+	def self.image_file
+		"items/#{name.underscore}/#{name.underscore}.png"
 	end
 
     def to_yaml_type

@@ -51,8 +51,9 @@ class VectorMap
 		# game for level switching.
 		if @editorMode == true 
 			@polys.clear 
-			@items = nil
+			@items = Items.new self
 		end
+
 		# Get rid of old layers
 		@layers.clear
 
