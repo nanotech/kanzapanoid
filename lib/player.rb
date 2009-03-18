@@ -1,4 +1,5 @@
 require 'character'
+require 'backpack'
 
 class Player < Character
 	def initialize(window, position=window.center)
@@ -29,6 +30,9 @@ class Player < Character
 		# based on these types. The actual value for the collision_type is arbitrary
 		# and, as long as it is consistent, will work for us; of course, it helps to have it make sense
 		@torso.collision_type = :player
+		@torso.obj = self
+
+		@backpack = Backpack.new @screen
 
 		# Enable angle correction
 		@angle_correction = true
@@ -118,6 +122,11 @@ class Player < Character
 		@animator.group = :standing
 	end
 
+	def draw
+		super
+		@backpack.draw
+	end
+
 	def update
 		if @body.vel.x > 5 or @body.vel.x < -5
 			@animator.group = :walking
@@ -125,5 +134,9 @@ class Player < Character
 			@animator.group = :standing
 		end
 		super
+	end
+
+	def collect(item)
+		@backpack << item
 	end
 end

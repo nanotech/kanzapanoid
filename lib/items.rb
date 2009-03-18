@@ -1,6 +1,7 @@
 require 'item'
 
 class Items
+	attr_reader :screen
 	attr_accessor :items, :available_items
 
 	def initialize(map)
@@ -9,7 +10,9 @@ class Items
 
 		@screen = map.screen
 		@items = []
+		@remove_items = []
 
+		register_collisions
 		register_yaml_types
 	end
 
@@ -17,6 +20,14 @@ class Items
 		@items.each do |item|
 			item.draw
 		end
+	end
+
+	def update
+		@remove_items.each do |item|
+			item.destroy
+			@items.delete item
+		end
+		@remove_items.clear
 	end
 
 	def scan(directory='items')
@@ -38,11 +49,27 @@ class Items
 	def create(item, *args)
 		item = item.to_s
 		get item
-		item.constantize.new(@screen, *args)
+		item.constantize.new self, *args
 	end
 
-	def add(item, *args)
-		@items.push create(item, *args)
+	def add(item_type, *args)
+		item = create item_type, *args
+		@items.push
+	end
+
+	def remove(item)
+		@remove_items << item
+	end
+
+	def register_collisions
+		@available_items.each do |item_name, item_class|
+			[:player].each do |other|
+				@screen.space.add_collision_func(item_name, other) do |a_shape, b_shape|
+					a_shape.obj.collided_with b_shape.obj
+					@remove_items << a_shape.obj
+				end
+			end
+		end
 	end
 
 	def register_yaml_types

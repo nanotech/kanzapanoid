@@ -17,10 +17,6 @@ class Game < Screen
 	def initialize(*args)
 		super
 
-		# Put the score here, as it is the environment that tracks this now
-		@score = 0
-		@font = Font.new @window, Gosu::default_font_name, 20
-
 		# Time increment over which to apply a physics "step" ("delta t")
 		@dt = (1.0/60.0)
 
@@ -61,6 +57,7 @@ class Game < Screen
 		@space.step(@dt)
 
 		@audio.update
+		@map.update
 		@player.update
 
 		$last_time = milliseconds

@@ -30,6 +30,10 @@ class VectorMap
 		@items.draw
 	end
 
+	def update
+		@items.update
+	end
+
 	module ParseMode
 		None = 0
 		ChipmunkPoly = 1 # for the actual game

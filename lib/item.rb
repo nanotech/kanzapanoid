@@ -1,14 +1,15 @@
 class Item
-	attr_reader :image, :image_name, :yaml_tag, :shape
+	attr_reader :image, :image_name, :yaml_tag, :shape, :context
 
-	def initialize(screen, position, shape, image=self.class.image_file,
-				   yaml_tag=self.class.name, space=screen.space)
+	def initialize(context, position, shape, image=self.class.image_file,
+				   yaml_tag=self.class.name, space=context.screen.space)
 
 		@image_name = image
 		@yaml_tag = '-' + yaml_tag
 		@space = space
 
-		@window = screen.window
+		@context = context # the Items object that holds this item.
+		@window = context.screen.window
 
 		@image = Gosu::Image.new(@window, image, false)
 
@@ -19,13 +20,24 @@ class Item
 		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
 		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
 
+		@shape.collision_type = self.class.name.underscore.to_sym
+		@shape.obj = self
+
 		create
+	end
+
+	# Override this.
+	def collided_with(other)
 	end
 
 	def draw(angle=0,z=ZOrder::Items)
 		@image.draw_rot(@shape.body.p.x - @window.camera.x,
 						@shape.body.p.y - @window.camera.y,
 						z, angle)
+	end
+
+	def draw_icon(x, y, z=ZOrder::Items, *args)
+		@image.draw(x, y, z, *args)
 	end
 
 	def create
@@ -60,3 +72,5 @@ class Item
 		[values['x'], values['y']]
 	end
 end
+
+require 'collectible_item'
