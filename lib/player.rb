@@ -33,6 +33,7 @@ class Player < Character
 		@torso.obj = self
 
 		@backpack = Backpack.new @screen
+		@screen.dashboard.plugin @backpack
 
 		# Enable angle correction
 		@angle_correction = true
@@ -120,11 +121,6 @@ class Player < Character
 		end
 
 		@animator.group = :standing
-	end
-
-	def draw
-		super
-		@backpack.draw
 	end
 
 	def update

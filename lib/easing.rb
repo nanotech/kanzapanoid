@@ -171,3 +171,36 @@ class Easer
 	def to_i; @value.to_i; end
 	def to_s; @value.to_s; end
 end
+
+class VectorEaser
+	def initialize(vect, *args)
+		@easers = []
+
+		vect.each do |scalar|
+			@easers << Easer.new(scalar, *args)
+		end
+	end
+
+	def update
+		@easers.each { |e| e.update }
+	end
+
+	def to(value, *args)
+		@easers.each_with_index do |e,s|
+			e.to(value[s], *args)
+		end
+	end
+
+	def target; get :target end
+	def value; get :value end
+
+	def get(value)
+		values = []
+
+		@easers.each do |e|
+			values << e.send(value)
+		end
+
+		values.to_vector
+	end
+end

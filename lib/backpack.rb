@@ -1,8 +1,8 @@
 class Backpack
 	attr_reader :contents
 
-	def initialize(screen)
-		@screen = screen
+	def initialize(dashboard)
+		@dashboard = dashboard
 		@contents = []
 	end
 
@@ -10,10 +10,9 @@ class Backpack
 		@contents << item
 	end
 
-	def draw
+	def draw(x, y, z)
 		@contents.each_with_index do |item, i|
-			top = item.context.screen.height - 70
-			item.draw_icon i*60 + 20, top
+			item.draw_icon i*60 + x, y, z, :animate
 		end
 	end
 end

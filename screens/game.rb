@@ -3,16 +3,19 @@ require 'audio'
 require 'chipmunk'
 include CP
 
+require 'dashboard'
 require 'vectormap'
 require 'player'
 
 # Layering of sprites
 module ZOrder
-	Background, Tiles, Items, Player, UI = *0..5
+	Background, Tiles, Items, Player = *0..4
+	Dashboard = 800_000
+	Mouse = 1_000_000
 end
 
 class Game < Screen
-	attr_reader :map, :space
+	attr_reader :map, :space, :dashboard
 
 	def initialize(*args)
 		super
@@ -24,6 +27,8 @@ class Game < Screen
 		@space = Space.new
 		@space.damping = 0.8
 		@space.gravity = Vec2.new(0.0, 600.0)
+
+		@dashboard = Dashboard.new self
 
 		@player = Player.new self, Vec2.new(300.0, 200.0)
 
@@ -59,6 +64,7 @@ class Game < Screen
 		@audio.update
 		@map.update
 		@player.update
+		@dashboard.draw
 
 		$last_time = milliseconds
 	end

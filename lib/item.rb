@@ -1,3 +1,5 @@
+require 'easing'
+
 class Item
 	attr_reader :image, :image_name, :yaml_tag, :shape, :context
 
@@ -23,21 +25,47 @@ class Item
 		@shape.collision_type = self.class.name.underscore.to_sym
 		@shape.obj = self
 
+		@easer = nil
+		@eased = nil
+
 		create
 	end
 
 	# Override this.
 	def collided_with(other)
+		@eased = nil
 	end
 
-	def draw(angle=0,z=ZOrder::Items)
+	def draw
 		@image.draw_rot(@shape.body.p.x - @window.camera.x,
 						@shape.body.p.y - @window.camera.y,
-						z, angle)
+						ZOrder::Items, angle)
 	end
 
-	def draw_icon(x, y, z=ZOrder::Items, *args)
-		@image.draw(x, y, z, *args)
+	def angle
+		@shape.body.a
+	end
+
+	def draw_icon(x, y, z=ZOrder::Items, animate=false, *args)
+		x += @image.width/2
+		y += @image.height/2
+
+		if animate
+			unless @eased
+				@easer = VectorEaser.new(
+					[@shape.body.p.x - @context.screen.camera.x, 
+						@shape.body.p.y - @context.screen.camera.y],
+					:in_out, :expo
+				)
+				@easer.to [x,y], 2000
+				@eased = true
+			end
+
+			@easer.update
+			x, y = @easer.value.to_a
+		end
+
+		@image.draw_rot(x, y, z, angle, *args)
 	end
 
 	def create

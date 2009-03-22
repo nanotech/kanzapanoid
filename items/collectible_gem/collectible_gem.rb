@@ -6,6 +6,8 @@ class CollectibleGem < CollectibleItem
 		super(screen, location, shape)
 	end
 
-	def draw; super(15 * Math.sin(milliseconds / 300.0)); end
+	def angle
+		15 * Math.sin(milliseconds / 300.0)
+	end
 end
 
