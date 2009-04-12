@@ -26,17 +26,17 @@ class BodyPart
 		@radius = Math.hypot(@x, @y)
 	end
 
-	def draw(angle)
+	def draw(angle, mirror=true)
 		angle = 0 unless angle
 
 		if @parent and @parent.is_a?(Symbol)
 			@parent = @character.body_parts[@parent]
 		end
 
-		@angle = angle
+		@angle = mirror ? -angle : angle
 
-		theta = Math.atan2(@x, @y) + @character.body.a
-		theta += @parent.angle.degrees_to_radians - 90 if @parent
+		theta = Math.atan2(mirror ? -@x : @x, @y) + @character.body.a
+		theta += @parent.angle.degrees_to_radians + (mirror ? 90 : -90) if @parent
 
 		@offset_x = @radius * Math::cos(theta)
 		@offset_y = @radius * Math::sin(theta)
@@ -52,8 +52,7 @@ class BodyPart
 			@character.body.p.y - @window.camera.y + @offset_y,
 			@z,
 			@character.body.a.radians_to_gosu + @angle,
-			@origin_x, @origin_y
+			@origin_x, @origin_y, mirror ? -1 : 1
 		)
 	end
 end
-

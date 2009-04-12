@@ -16,7 +16,7 @@ class Character
 		@body.add_to_space @screen.space
 
 		@body_parts = {}
-		@walking = :left
+		@facing = :left
 		@animator = Animator.new
 
 		@angle_correction = false
@@ -25,7 +25,7 @@ class Character
 
 	def draw
 		@body_parts.each do |part_name, part|
-			part.draw @animator.render(part_name)
+			part.draw @animator.render(part_name), @facing == :left
 		end
 	end
 
@@ -81,7 +81,7 @@ class Character
 		@body.apply_impulse(CP::Vec2.new(30 * direction, 0), CP::Vec2.new(0.0, 0.0))
 
 		if @torso.surface_v.x * direction < 5000.0
-			if @walking != direction_sym # changing directions?
+			if @facing != direction_sym # changing directions?
 				@torso.surface_v.x = 0.0
 				@body.apply_impulse(@body.v * -1, CP::Vec2.new(0.0, 0.0))
 			end
@@ -89,7 +89,7 @@ class Character
 			@torso.surface_v.x -= 100.0 * direction
 		end
 
-		@walking = direction_sym
+		@facing = direction_sym #if @torso.body.vel.x * direction > 0
 	end
 
 	def spin_left
@@ -108,7 +108,6 @@ class Character
 	end
 
 	def stop
-		@walking = false
 		@update_animation = false
 		@torso.surface_v = CP::Vec2.new(0,0)
 	end
