@@ -2,7 +2,7 @@ require 'character'
 require 'backpack'
 
 class Player < Character
-	def initialize(window, position=window.center)
+	def initialize(screen, position=window.center)
 		shape_array = [
 			CP::Vec2.new(-22, -18), # bottom left
 			CP::Vec2.new(-22, 22), # bottom right
@@ -22,7 +22,7 @@ class Player < Character
 
 		@torso.body.a = -(Math::PI/2) # angle in radians; faces towards top of screen
 
-		super(window, body, position)
+		super(screen, body, position)
 
 		@torso.add_to_space(@screen.space)
 
@@ -134,5 +134,14 @@ class Player < Character
 
 	def collect(item)
 		@backpack << item
+	end
+
+	def drop
+		item = @backpack.pop
+
+		if item
+			item.reset @torso.body.pos + vec2(140,-50)
+			@screen.map.items.insert item
+		end
 	end
 end

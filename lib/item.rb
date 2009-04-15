@@ -68,6 +68,18 @@ class Item
 		@image.draw_rot(x, y, z, angle, *args)
 	end
 
+	def reset(pos=nil)
+		destroy
+
+		# Reset velocity
+		@shape.body.vel = Vec2.new(0,0)
+
+		# Move to given position
+		@shape.body.pos = pos if pos
+
+		create
+	end
+
 	def create
 		@shape.body.add_to_space(@space)
 		@shape.add_to_space(@space)

@@ -87,6 +87,7 @@ class Game < Screen
 		when Kb2; @audio.samples[0].fade_in
 		when Kb3; @audio.samples[0].speed_to(0)
 		when Kb4; @audio.samples[0].speed_to(2)
+		when KbF; @player.drop
 		when KbEscape
 			@audio.samples[0].instance.pause
 			switch_to :menu

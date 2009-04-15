@@ -61,6 +61,10 @@ class Items
 		@remove_items << item
 	end
 
+	def insert(item)
+		@items << item
+	end
+
 	def register_collisions
 		@available_items.each do |item_name, item_class|
 			[:player].each do |other|

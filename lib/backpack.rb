@@ -15,4 +15,8 @@ class Backpack
 			item.draw_icon i*60 + x, y, z, :animate
 		end
 	end
+
+	def pop
+		@contents.pop
+	end
 end
