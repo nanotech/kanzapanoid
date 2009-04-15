@@ -140,7 +140,7 @@ class Player < Character
 		item = @backpack.pop
 
 		if item
-			item.reset @torso.body.pos + vec2(140,-50)
+			item.reset @torso.body.pos + vec2(140 * facing_sign, -50)
 			@screen.map.items.insert item
 		end
 	end

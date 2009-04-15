@@ -73,10 +73,7 @@ class Character
 
 		# Multiplying by -1 inverts a number,
 		# thus we can use it to change direction.
-		case direction_sym
-			when :left then direction = -1
-			when :right then direction = 1
-		end
+		direction = facing_sign(direction_sym)
 
 		@body.apply_impulse(CP::Vec2.new(30 * direction, 0), CP::Vec2.new(0.0, 0.0))
 
@@ -110,6 +107,10 @@ class Character
 	def stop
 		@update_animation = false
 		@torso.surface_v = CP::Vec2.new(0,0)
+	end
+
+	def facing_sign(facing=@facing)
+		facing == :right ? 1 : -1
 	end
 end
 
