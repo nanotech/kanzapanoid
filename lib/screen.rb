@@ -1,3 +1,7 @@
+#
+# *DEPRECATED!* Don't use this file, use either Screens, or just a Window instead.
+#
+
 begin
 	require 'rubygems'
 rescue LoadError

@@ -9,13 +9,17 @@ require 'gosu'
 include Gosu
 
 #
-# Provides some common game-related features such as
-# camera position and binding the escape to close.
+# Provides some common game features such
+# as a camera, and screen/scene switching.
 #
 class Screens < Window
 	attr_reader :width, :height, :center, :fullscreen
 	attr_accessor :camera
 
+	# Creates a new Window. Having more than one Window will crash Gosu.
+	#
+	# The Window's size is specified as a +width+, and a Rational ratio such
+	# as <tt>Rational(4,3)</tt> or <tt>Rational(16,10)</tt>.
 	def initialize(caption='', width=1280, ratio=Rational(16,10), fullscreen=false)
 		@width = width
 		@height = (width / ratio).numerator
@@ -33,7 +37,9 @@ class Screens < Window
 		@current_screen = nil
 	end
 
-	def switch_to(screen, *args, &block)
+	# Switches to the Screen specified, passing the given arguments, and
+	# executing the optional block before leaving to the next Screen.
+	def switch_to(screen, *args, &block) # :yield: old_screen, new_screen
 		screen = screen.to_s
 
 		required = require 'screens/' + screen.underscore
@@ -66,11 +72,17 @@ class Screens < Window
 		@current_screen = @screens[screen]
 	end
 
+	# Deletes a Screen.
 	def destroy!(screen)
 		@screens.delete(screen)
 	end
 
+	# Draws the current screen.
+	# Don't forget to call +super+ if you override this!
 	def draw; @current_screen.draw end
+
+	# Updates the current screen.
+	# Don't forget to call +super+ if you override this!
 	def update; @current_screen.update end
 
 	# Default key mappings

@@ -1,5 +1,10 @@
 require 'item'
 
+#
+# Items manages Items (Item, plurl).
+#
+# It provides auto-loading, pickups, and YAML serialization.
+#
 class Items
 	attr_reader :screen
 	attr_accessor :items, :available_items

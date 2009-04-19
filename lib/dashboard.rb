@@ -1,3 +1,4 @@
+# Draws a number of Components onto the Screen in a HUD-like fashion.
 class Dashboard
 	attr_reader :components, :screen
 
@@ -6,10 +7,12 @@ class Dashboard
 		@components = []
 	end
 
+	# Plugs in a Component.
 	def plugin(component)
 		@components << component
 	end
 
+	# Draws the Dashboard.
 	def draw
 		h = 120 # height
 		t = @screen.window.height - h # top
