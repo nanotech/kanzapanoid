@@ -212,7 +212,8 @@ class MapEditor
 	end
 
 	def add_item(x, y)
-		@map.items.add @map.items.available_items[@tool].camelize, [x,y]
+		tools = @map.items.available_items.values.sort { |a,b| a.inspect <=> b.inspect }
+		@map.items.add tools[@tool].to_s, [x,y]
 	end
 
 	def switch_tools(id=nil)

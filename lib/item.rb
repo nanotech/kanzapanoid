@@ -19,8 +19,6 @@ class Item
 
 		@shape = shape
 		@shape.body.p = position
-		@shape.body.v = CP::Vec2.new(0.0, 0.0) # velocity
-		@shape.body.a = (3*Math::PI/2.0) # angle in radians; faces towards top of screen
 
 		@shape.collision_type = self.class.name.underscore.to_sym
 		@shape.obj = self
@@ -34,6 +32,7 @@ class Item
 	# Override this.
 	def collided_with(other)
 		@eased = nil
+		return false
 	end
 
 	def draw

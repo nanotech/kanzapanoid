@@ -43,6 +43,7 @@ class Items
 	end
 
 	def get(item)
+		item = item.underscore
 		require "items/#{item}/#{item}.rb"
 	end
 
@@ -53,8 +54,7 @@ class Items
 	end
 
 	def add(item_type, *args)
-		item = create item_type, *args
-		@items.push
+		@items.push create(item_type, *args)
 	end
 
 	def remove(item)
@@ -69,8 +69,9 @@ class Items
 		@available_items.each do |item_name, item_class|
 			[:player].each do |other|
 				@screen.space.add_collision_func(item_name, other) do |a_shape, b_shape|
-					a_shape.obj.collided_with b_shape.obj
-					@remove_items << a_shape.obj
+					if a_shape.obj.collided_with b_shape.obj
+						@remove_items << a_shape.obj
+					end
 				end
 			end
 		end

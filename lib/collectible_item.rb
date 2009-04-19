@@ -5,5 +5,6 @@ class CollectibleItem < Item
 	def collided_with(other)
 		super
 		other.collect self #if other.respond_to?(:collect)
+		return true
 	end
 end
