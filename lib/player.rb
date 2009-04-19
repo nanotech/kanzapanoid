@@ -75,6 +75,10 @@ class Player < Character
 		animation :walking, :standing do
 			duration 700
 			animate(:head) { range(-2..3) }
+
+			animate :gun do
+				range(90..90)
+			end
 		end
 
 		animation :walking do
@@ -121,6 +125,14 @@ class Player < Character
 		end
 
 		@animator.group = :standing
+
+		# Add new parts on-the-fly. TODO: Move this to the gun pickup event.
+
+		new_parts = {
+			:gun => [[0,0],[0.0,0.9], 10, :lower_right_arm],
+		}
+
+		load_parts new_parts
 	end
 
 	def update
@@ -141,6 +153,26 @@ class Player < Character
 
 		if item
 			item.reset @torso.body.pos + vec2(140 * facing_sign, -50)
+			@screen.map.items.insert item
+		end
+	end
+
+	def shoot
+		item = @backpack.pop
+
+		if item
+			m = vec2(@screen.mouse_x + @screen.camera.x, @screen.mouse_y + @screen.camera.y + 70) - @torso.body.pos
+
+			r = 200.0 # constant pull strength, not based on mouse distance
+			t = Math::atan2(m.x, m.y)
+			fv = vec2(r * Math::sin(t), r * Math::cos(t))
+
+			launch_point = @torso.body.pos + vec2(90 * facing_sign, -70)
+
+			# @screen.draw_line(@screen.mouse_x, @screen.mouse_y, 0xffff0000, launch_point.x-@screen.camera.x, launch_point.y-@screen.camera.y, 0xffff0000, 1000)
+
+			item.reset launch_point
+			item.shape.body.apply_impulse(fv, vec2(0, 0))
 			@screen.map.items.insert item
 		end
 	end

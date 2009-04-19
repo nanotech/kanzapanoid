@@ -35,6 +35,8 @@ class Game < Screen
 		@map = VectorMap.new self
 		@map.open 'test'
 
+		@mouse = Image.new(@window, 'media/crosshair.png', true)
+
 		@audio = Audio.new @window, 'steps'
 		@beep = @audio.load 'beep'
 	end
@@ -72,6 +74,8 @@ class Game < Screen
 	def draw
 		@map.draw
 		@player.draw
+
+		@mouse.draw_rot(mouse_x, mouse_y, ZOrder::Mouse, 0)
 	end
 
 	def enter
@@ -88,6 +92,7 @@ class Game < Screen
 		when Kb3; @audio.samples[0].speed_to(0)
 		when Kb4; @audio.samples[0].speed_to(2)
 		when KbF; @player.drop
+		when MsLeft; @player.shoot
 		when KbEscape
 			@audio.samples[0].instance.pause
 			switch_to :menu
