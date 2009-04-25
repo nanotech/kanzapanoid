@@ -1,7 +1,6 @@
 #!/usr/bin/ruby
 Dir.chdir '..'
 $LOAD_PATH.push 'lib/'
-require 'screen'
 
 require 'chipmunk'
 include CP

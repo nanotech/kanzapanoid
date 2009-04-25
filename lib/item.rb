@@ -1,4 +1,5 @@
 require 'easing'
+require 'helpers'
 
 #
 # An Item is any kind of physical item. Any Item has, at minimum, a containing

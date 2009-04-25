@@ -1,3 +1,5 @@
+require 'yaml'
+
 module CP
 	YAML_TAG = 'chipmunk.slembcke.net,2008-12-08'
 
